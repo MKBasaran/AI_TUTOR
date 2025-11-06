@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EDMOPluginTemplate", "EDMOPluginTemplate.csproj", "{477EBD75-7B43-407B-9D3C-A65B226CC52A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{477EBD75-7B43-407B-9D3C-A65B226CC52A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{477EBD75-7B43-407B-9D3C-A65B226CC52A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{477EBD75-7B43-407B-9D3C-A65B226CC52A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{477EBD75-7B43-407B-9D3C-A65B226CC52A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
