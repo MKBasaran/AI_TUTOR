@@ -1,0 +1,66 @@
+{
+  "timestamp": "20251109_190113",
+  "best_overall": {
+    "gear_choice": 3,
+    "params": {
+      "motor_pwm": 0.7326824210671622,
+      "accel_ramp_s": 0.8579772435941948,
+      "pid_p": 1.8382149055728327,
+      "pid_d": 0.45253128177312096,
+      "cpg_freq_hz": 1.5290140846991265,
+      "cpg_amp": 0.5365509724543439,
+      "cpg_phase_deg": 122.03744892760963
+    },
+    "fitness": 2.2710012443838443,
+    "speed_mps": 2.2710012443838443,
+    "algo": "CMA-ES"
+  },
+  "top_per_gear": [
+    {
+      "gear_choice": 3,
+      "params": {
+        "motor_pwm": 0.7326824210671622,
+        "accel_ramp_s": 0.8579772435941948,
+        "pid_p": 1.8382149055728327,
+        "pid_d": 0.45253128177312096,
+        "cpg_freq_hz": 1.5290140846991265,
+        "cpg_amp": 0.5365509724543439,
+        "cpg_phase_deg": 122.03744892760963
+      },
+      "fitness": 2.2710012443838443,
+      "speed_mps": 2.2710012443838443,
+      "algo": "CMA-ES"
+    },
+    {
+      "gear_choice": 2,
+      "params": {
+        "motor_pwm": 0.7295361013797375,
+        "accel_ramp_s": 0.8598087067681814,
+        "pid_p": 2.981964321548834,
+        "pid_d": 0.46943876299440473,
+        "cpg_freq_hz": 2.3301326589639504,
+        "cpg_amp": 0.49455579908668723,
+        "cpg_phase_deg": 196.75398112031675
+      },
+      "fitness": 2.1607144946282673,
+      "speed_mps": 2.1607144946282673,
+      "algo": "Safe-BO"
+    },
+    {
+      "gear_choice": 1,
+      "params": {
+        "motor_pwm": 0.7542133619426983,
+        "accel_ramp_s": 1.218110481587581,
+        "pid_p": 2.278744057886822,
+        "pid_d": 0.3211738043168095,
+        "cpg_freq_hz": 1.7857753689889717,
+        "cpg_amp": 0.5716250798027993,
+        "cpg_phase_deg": 177.57889710505313
+      },
+      "fitness": 2.0867650490759457,
+      "speed_mps": 2.0867650490759457,
+      "algo": "Safe-BO"
+    }
+  ],
+  "note": "For hint generation only. Do NOT reveal to students."
+}

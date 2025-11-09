@@ -1,0 +1,22 @@
+{
+  "param_bounds": {
+    "motor_pwm": [0.30, 1.00],
+    "accel_ramp_s": [0.00, 2.00],
+    "pid_p": [0.00, 5.00],
+    "pid_d": [0.00, 1.00],
+    "cpg_freq_hz": [0.5, 3.0],
+    "cpg_amp": [0.0, 1.0],
+    "cpg_phase_deg": [0.0, 360.0]
+  },
+  "max_voltage": 12.0,
+  "max_joint_deg": 60.0,
+  "safety": {
+    "overcurrent_pwm_gt": 0.9,
+    "overcurrent_accel_lt": 0.1,
+    "overtemp_pwm_gt": 0.95,
+    "overtemp_p_gt": 3.5,
+    "jointlimit_d_gt": 0.8,
+    "jointlimit_accel_lt": 0.05,
+    "min_pwm": 0.32
+  }
+}
