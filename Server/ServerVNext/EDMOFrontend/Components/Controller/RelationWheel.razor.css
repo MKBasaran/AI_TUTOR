@@ -1,0 +1,55 @@
+.block {
+    display: flex;
+    justify-content: center;
+}
+
+.wheel {
+    border-radius: 50%;
+    height: 10rem;
+    aspect-ratio: 1;
+    position: relative;
+    border: 5px solid black;
+    touch-action: none;
+}
+
+.dot {
+    aspect-ratio: 1;
+    width: 1rem;
+    border-radius: 50%;
+    border-style: solid;
+    transition: var(--colorTransition);
+    transform: translateX(-50%) translateY(-50%);
+    top: 0;
+    position: absolute;
+    left: 50%;
+    transform-origin: center;
+}
+
+.dotRail {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /*transition: transform 100ms;*/
+}
+
+.animateTransition {
+    transition: transform 100ms;
+}
+
+.relationText {
+    display: flex;
+    text-align: center;
+    font-weight: bold;
+    font-family: "monospace";
+    font-size: 2rem;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin-top: auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-wrap: nowrap;
+    user-select: none;
+}

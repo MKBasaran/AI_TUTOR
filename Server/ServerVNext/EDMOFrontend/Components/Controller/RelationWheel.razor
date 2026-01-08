@@ -1,0 +1,145 @@
+@implements IDisposable
+
+@using System.Numerics
+@using ServerCore.EDMO
+
+<div class="block">
+    <div class="wheel" @onpointerdown="onMouseDown" id="relationWheel">
+        <span class="relationText">
+            @((int)normalisedAngle(fromRadians(ControlContext.OscillatorParams[ControlContext.Index].PhaseShift)))
+        </span>
+
+        @for (int i = 0; i < ControlContext.OscillatorParams.Length; ++i)
+        {
+            var relationValue = ControlContext.OscillatorParams[i].PhaseShift;
+            var hue = ControlContext.AssignedHueOf(i);
+            if (i == ControlContext.Index)
+                continue;
+
+            int j = i;
+
+            <div class="dotRail" style="transform: rotate(@(relationValue)rad)">
+                <div class="dot" style="background-color: hsl(@(hue)deg, 100%, 50%)"></div>
+            </div>
+        }
+
+        <div class="dotRail" style="transform: rotate(@(ControlContext.OscillatorParams[ControlContext.Index].PhaseShift)rad)">
+            <div class="dot" style="background-color: hsl(@(ControlContext.AssignedHueOf(ControlContext.Index))deg, 100%, 50%)"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    GetBoundingClientRectOf = (elementID) => {
+        return document.getElementById(elementID).getBoundingClientRect();
+    };
+    UnbindMovementCallbacks = () => {
+        document.onpointerup = null;
+        document.onpointermove = null;
+    }
+    BindMovementCallbacks = (dotnetObj) => {
+        document.onpointermove = (args) => dotnetObj.invokeMethodAsync("OnMouseMove", args.clientX, args.clientY);
+        document.onpointerup = UnbindMovementCallbacks;
+    }
+</script>
+
+@code {
+    public record BoundingClientRect
+    {
+        public float X { get; init; }
+        public float Y { get; init; }
+        public float Width { get; init; }
+        public float Height { get; init; }
+        public float Top { get; init; }
+        public float Right { get; init; }
+        public float Bottom { get; init; }
+        public float Left { get; init; }
+    }
+
+    private DotNetObjectReference<RelationWheel>? objRef;
+
+    [Inject] public IJSRuntime JsRuntime { get; set; } = null!;
+
+    [CascadingParameter(Name = "ControlContext")]
+    public EDMOSession.ControlContext ControlContext { get; set; } = null!;
+
+    [Parameter] public EventCallback<float> OnValueChanged { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        objRef = DotNetObjectReference.Create(this);
+
+        ControlContext.ExternalRelationChanged += otherRelationUpdated;
+        
+        
+        return base.OnInitializedAsync();
+    }
+    
+    private void otherRelationUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    private async Task onMouseDown(MouseEventArgs args)
+    {
+        if (args.Button is not 0)
+            return;
+
+        await JsRuntime.InvokeVoidAsync("BindMovementCallbacks", objRef);
+        await OnMouseMove(args.ClientX, args.ClientY);
+    }
+
+    [JSInvokable]
+    public async Task OnMouseMove(double x, double y)
+    {
+        var rect = await JsRuntime.InvokeAsync<BoundingClientRect>("GetBoundingClientRectOf", "relationWheel");
+
+        var minDim = Math.Min(rect.Width, rect.Height);
+        var origin = new Vector2(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+
+        var mousePos = new Vector2((float)x, (float)y);
+
+        double distanceSquared = Math.Pow(mousePos.X - origin.X, 2) + Math.Pow(mousePos.Y - origin.Y, 2);
+
+        if (distanceSquared > Math.Pow(minDim / 2, 2) * 2)
+            return;
+
+        float angle = normalisedAngle(getDegreesFromPosition(origin, mousePos));
+        
+        int angleQuant = (int)Math.Round(angle);
+        await OnValueChanged.InvokeAsync(toRadians(angleQuant));
+    }
+
+    private static float fromRadians(float radians)
+        => radians * 180 / MathF.PI;
+
+    private static float toRadians(float degrees) => degrees / 180 * MathF.PI;
+
+    /// <summary>
+    /// Computes the angle (in degrees) of <c>target</c> around <c>origin</c>
+    /// </summary>
+    private static float getDegreesFromPosition(Vector2 origin, Vector2 target)
+    {
+        var direction = target - origin;
+
+        float angle = fromRadians(MathF.Atan2(direction.Y, direction.X));
+
+        return (angle + 90);
+    }
+
+    private static float normalisedAngle(float angle)
+    {
+        while (angle < 0)
+            angle += 360;
+
+        return angle % 360;
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
+        ControlContext.ExternalRelationChanged -= otherRelationUpdated;
+    }
+
+}

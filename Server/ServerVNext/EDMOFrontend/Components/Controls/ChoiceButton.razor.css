@@ -1,0 +1,22 @@
+div.choiceButton {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 1rem;
+    background-color: var(--baseAccentColor);
+    color: var(--baseTextColor);
+    flex: 1 1 auto;
+    text-decoration: none;
+    transition: var(--colorTransition), height 100ms, transform 100ms;
+    text-align: center;
+    border-width: thick;
+    border-style: solid;
+    border-color: transparent;
+    cursor: pointer;
+}
+
+div.selected {
+    border-color: var(--baseTextColor);
+    border-width: thick;
+    border-style: solid;
+    transition: var(--colorTransition), height 100ms, transform 100ms;
+}

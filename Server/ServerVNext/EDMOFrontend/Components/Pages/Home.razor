@@ -1,0 +1,238 @@
+﻿@page "/"
+@using System.Globalization
+@using EDMOFrontend.Components.Controls
+@using EDMOFrontend.Components.Layout
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.WebUtilities
+@using ServerCore.EDMO
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@implements IDisposable
+
+<PageTitle>Home</PageTitle>
+
+<CascadingValue Name="LocalisationBank" Value="@("home")">
+    <Card>
+        <div>
+            <h1>
+                <LocalisableString TextKey="controllerSetup" DefaultText="Controller setup"/>
+            </h1>
+            <h4>
+                <LocalisableString TextKey="controllerSetupDesc"
+                                   DefaultText="Enter your name and select the robot you've been assigned to."/>
+            </h4>
+            <hr/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="language" DefaultText="Language"/>
+            </h2>
+        </div>
+        <ChoiceGroup @bind-Current="@selectedLocale" @bind-Current:after="updateLocale"
+                     Options="[..LocalisationContext.AvailableLocales.Keys]"/>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="name" DefaultText="Name"/>
+            </h2>
+            <TextInputBox @bind-Text="nameInputValue"
+                          @bind-Text:after="updateNameStorage"
+                          Placeholder="@namePlaceholder"/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="selectEdmo" DefaultText="Select your EDMO"/>
+            </h2>
+            @if (availableSessions.Length == 0)
+            {
+                <h3>
+                    <LocalisableString TextKey="noActiveEdmos"
+                                       DefaultText="No EDMOs are active at this moment."/>
+                </h3>
+            }
+            else
+            {
+                <TextInputBox @bind-Text="filter" Placeholder="@searchPlaceholder"/>
+            }
+        </div>
+
+        <ChoiceGroup @bind-Current="currentEDMOSelection"
+                     @bind-Current:after="updateEdmoStorage"
+                     Options="filteredSessions"/>
+
+        <div class="alignFlexEnd alignBottom">
+            <div>
+                <Button Enabled="@(buttonEnabled)" OnClick="@navigateToController">
+                    <LocalisableString TextKey="letsStart" DefaultText="Let's start!"/>
+                </Button>
+            </div>
+        </div>
+    </Card>
+</CascadingValue>
+
+@code
+{
+    [Inject] public NavigationManager NavigationManager { get; set; }
+    [Inject] public EDMOSessionManager sessionManager { get; set; }
+
+    [Inject] public ProtectedSessionStorage Storage { get; set; }
+
+    #region Localisation
+
+    [Inject] public LocalisationContext LocalisationContext { get; set; }
+
+    private string selectedLocale { get; set; }
+
+    private async Task updateLocale()
+    {
+        await LocalisationContext.SetLocaleAsync(selectedLocale);
+    }
+
+    private async void onLocaleChanged()
+    {
+        try
+        {
+            selectedLocale = await LocalisationContext.GetLocaleNameAsync();
+            namePlaceholder = await getString("nameInputPlaceholder", "Enter your name.");
+            searchPlaceholder = await getString("searchInputPlaceholder", "Search");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            //Ignored because we don't want to kill the server
+        }
+    }
+
+    private string namePlaceholder { get; set; } = "Enter your name.";
+    private string searchPlaceholder { get; set; } = "Search";
+
+    private async ValueTask<string> getString(string key, string fallback)
+    {
+        try
+        {
+            return await LocalisationContext.GetLocalisedString("home", key) ?? fallback;
+        }
+        catch
+        {
+            return fallback;
+        }
+    }
+
+    #endregion
+
+    private bool buttonEnabled => !(string.IsNullOrWhiteSpace(nameInputValue) || currentEDMOSelection is null);
+    private string[] availableSessions;
+
+    public string nameInputValue { get; set; }
+    public string? currentEDMOSelection { get; set; }
+
+    #region sessionFiltering
+
+    private string b_filter = string.Empty;
+
+    private string filter
+    {
+        get => b_filter;
+        set
+        {
+            if (b_filter.Equals(value))
+                return;
+
+            b_filter = value;
+            updateFilteredSessions();
+        }
+    }
+
+    public string[] filteredSessions = [];
+
+    private void updateFilteredSessions()
+    {
+        if (string.IsNullOrEmpty(filter))
+        {
+            filteredSessions = availableSessions;
+            return;
+        }
+
+        var trimmed = filter.Trim().ToLowerInvariant();
+        filteredSessions = availableSessions.Where(s => s.ToLowerInvariant().Contains(trimmed)).ToArray();
+    }
+
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableSessions = [..sessionManager.AvailableSessions];
+        filteredSessions = availableSessions;
+        await initialiseComponents();
+        LocalisationContext.LocaleChanged += onLocaleChanged;
+
+        sessionManager.AvailableSessionsUpdated += () =>
+        {
+            availableSessions = [..sessionManager.AvailableSessions];
+            updateFilteredSessions();
+            InvokeAsync(StateHasChanged);
+        };
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task initialiseComponents()
+    {
+        try
+        {
+            var selectedEdmoStorage = await Storage.GetAsync<string>("selectedEDMO");
+            if (selectedEdmoStorage.Success)
+                currentEDMOSelection = selectedEdmoStorage.Value;
+        }
+        catch (Exception e)
+        {
+            // Ignored: If this fails, we are likely doing server side rendering
+            Console.WriteLine(e);
+        }
+
+        try
+        {
+            var nameStorage = await Storage.GetAsync<string>("userName");
+            if (nameStorage.Success)
+                nameInputValue = nameStorage.Value;
+        }
+        catch
+        {
+            // Ignored: If this fails, we are likely doing server side rendering
+        }
+
+        onLocaleChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await initialiseComponents();
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+
+    private async Task navigateToController()
+    {
+        var uri = NavigationManager.ToAbsoluteUri("/Controller?").ToString();
+        uri = QueryHelpers.AddQueryString(uri, "sessionIdentifier", currentEDMOSelection ?? "Default");
+        uri = QueryHelpers.AddQueryString(uri, "name", nameInputValue);
+        NavigationManager.NavigateTo(uri);
+
+        await Task.CompletedTask;
+    }
+
+    private async Task updateEdmoStorage()
+        => await Storage.SetAsync("selectedEDMO", currentEDMOSelection!);
+
+
+    private async Task updateNameStorage() =>
+        await Storage.SetAsync("userName", nameInputValue);
+
+    public void Dispose()
+    {
+        LocalisationContext.LocaleChanged -= onLocaleChanged;
+    }
+}

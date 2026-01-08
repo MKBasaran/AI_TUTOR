@@ -1,0 +1,12 @@
+<i class="fa-@Style fa-@Glyph" style="font-size: @FontSize">@ChildContent</i>
+
+@code {
+    public static readonly string FA_REGULAR = "regular";
+    public static readonly string FA_SOLID = "solid";
+
+    [Parameter] public string Glyph { get; set; } = "circle";
+    [Parameter] public string Style { get; set; } = FA_REGULAR;
+    [Parameter]public string FontSize { get; set; } = "1rem";
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,13 @@
+<div class="splitView">
+    <div class="splitPanel">
+        @Left
+    </div>
+    <div class="splitPanel">
+        @Right
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? Left { get; set; }
+    [Parameter] public RenderFragment? Right { get; set; }
+}

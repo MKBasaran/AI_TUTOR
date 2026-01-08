@@ -1,0 +1,70 @@
+@using EDMOFrontend.Components.Controls
+@using ServerCore.EDMO
+@implements IDisposable
+<div class="flex flex-column grow">
+    <div class="sliderPanel">
+        <div>
+            <h2>
+                <LocalisableString TextKey="frequency" DefaultText="Frequency"/>
+            </h2>
+            <SliderBar Min="0" Max="2" Step="0.1f" Value="ControlContext.Frequency"
+                       ValueChanged="OnFrequencyChanged"/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="amplitude" DefaultText="Amplitude"/>
+            </h2>
+            <SliderBar Min="0" Max="90" Step="0.1f" Value="ControlContext.Amplitude"
+                       ValueChanged="OnAmplitudeChanged"/>
+        </div>
+        <div>
+            <h2>
+                <LocalisableString TextKey="offset" DefaultText="Offset"/>
+            </h2>
+            <SliderBar Min="0" Max="180" Step="1f" Value="ControlContext.Offset"
+                       ValueChanged="OnOffsetChanged"/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="relation" DefaultText="Relation"/>
+            </h2>
+            <RelationWheel OnValueChanged="OnRelationChanged"/>
+        </div>
+        <div>
+            <ChoiceButton OnClick="ResetButtonClicked">
+                <LocalisableString TextKey="resetSliders" DefaultText="Reset values"/>
+            </ChoiceButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "ControlContext")]
+    public EDMOSession.ControlContext ControlContext { get; set; } = null!;
+    
+
+    protected override Task OnInitializedAsync()
+    {
+        ControlContext.ParamsUpdatedExternally += paramsUpdated;
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        ControlContext.ParamsUpdatedExternally -= paramsUpdated;
+    }
+
+    private void paramsUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnFrequencyChanged(float value) => ControlContext.Frequency = value;
+    private void OnAmplitudeChanged(float value) => ControlContext.Amplitude = value;
+    private void OnOffsetChanged(float value) => ControlContext.Offset = value;
+    private void OnRelationChanged(float value) => ControlContext.PhaseShift = value;
+
+    private void ResetButtonClicked() => ControlContext.ResetValues();
+}

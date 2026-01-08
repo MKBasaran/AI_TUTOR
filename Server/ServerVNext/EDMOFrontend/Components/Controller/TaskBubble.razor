@@ -1,0 +1,51 @@
+@using ServerCore.EDMO.Objectives
+<div class="bubble">
+    @if (ObjectiveGroups is null)
+    {
+        <LocalisableString TextKey="notConnected"
+                           DefaultText="Not connected to any active session."/>
+    }
+    else if (ObjectiveGroups.Length == 0)
+    {
+        <LocalisableString TextKey="noTasks" DefaultText="There are no tasks in this session."/>
+    }
+    else if (currentObjective is null)
+    {
+        <LocalisableString TextKey="tasksCompleted"
+                           DefaultText="You've completed all tasks"/>
+    }
+    else
+    {
+        @currentObjective.Title
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public EDMOObjectiveGroup[]? ObjectiveGroups { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        updateActiveTask();
+        return base.OnInitializedAsync();
+    }
+
+    private EDMOObjective? currentObjective;
+
+    private void updateActiveTask()
+    {
+        if (currentObjective is not null)
+            currentObjective.ObjectiveCompleted -= updateActiveTask;
+
+        if (ObjectiveGroups is null)
+            return;
+
+        currentObjective = ObjectiveGroups.SelectMany(g => g.Objectives).FirstOrDefault(o => !o.Completed);
+        
+        InvokeAsync(StateHasChanged);
+        
+        if (currentObjective is not null)
+            currentObjective.ObjectiveCompleted += updateActiveTask;
+    }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

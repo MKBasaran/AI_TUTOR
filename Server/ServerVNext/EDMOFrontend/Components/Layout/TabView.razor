@@ -1,0 +1,32 @@
+<div class="panelArea">
+    <div class="tabPanel">
+        @for (int i = 0; i < tabIcon.Length; ++i)
+        {
+            int j = i;
+            <div class="tab @(j == currentTabIndex ? "selected" : "")" @onclick="_ => updateValue(j)">
+                @tabIcon[j]
+            </div>
+        }
+    </div>
+    <div class="panelContent">
+        @if (tabContents.Length > currentTabIndex)
+        {
+            @tabContents[currentTabIndex]
+        }
+    </div>
+</div>
+
+@code {
+    private int currentTabIndex { get; set; } = 0;
+
+    [Parameter] public RenderFragment?[] tabIcon { get; set; }
+
+    [Parameter] public RenderFragment?[] tabContents { get; set; }
+
+    private async Task updateValue(int index)
+    {
+        currentTabIndex = index;
+        await Task.CompletedTask;
+    }
+
+}

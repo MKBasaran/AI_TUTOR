@@ -1,0 +1,19 @@
+.icon {
+    font-size: 3rem;
+}
+
+.viewportArea {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    max-height: 100vh;
+
+    transition: height 200ms, width 200ms;
+}
+
+@media screen and (orientation: portrait) {
+    .viewportArea {
+        max-height: 50vh;
+    }
+}

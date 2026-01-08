@@ -1,0 +1,14 @@
+div.card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--baseLayerColor);
+    color: var(--baseTextColor);
+    border-radius: 1rem;
+    box-shadow: var(--mainLayerShadow);
+    flex: 1 1 auto;
+    padding: 2rem;
+    margin: 1rem;
+    transition: var(--colorTransition);
+    overflow: hidden;
+    gap: 1rem;
+}

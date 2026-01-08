@@ -1,0 +1,14 @@
+.TaskPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.ObjectiveList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}

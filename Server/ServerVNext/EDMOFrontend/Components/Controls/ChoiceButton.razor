@@ -1,0 +1,12 @@
+<div class="choiceButton @(Selected ? "selected" : "")" @onclick="OnClick">
+    <h3>@ChildContent</h3>
+</div>
+
+@code {
+
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback<bool> SelectedChanged { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public required EventCallback OnClick { get; set; }
+}

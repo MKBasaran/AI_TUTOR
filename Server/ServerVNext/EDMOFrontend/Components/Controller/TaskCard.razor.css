@@ -1,0 +1,21 @@
+.taskCard {
+    display: flex;
+    flex-direction: column;
+    border-radius: 1rem;
+    background-color: var(--baseAccentColor);
+    color: var(--baseTextColor);
+    text-decoration: none;
+    transition: var(--colorTransition), transform 100ms;
+    padding: 1rem;
+}
+
+.taskTitle {
+    font-size: larger;
+    font-weight: bolder;
+    align-self: center;
+}
+
+.completed {
+    text-decoration: line-through;
+    text-decoration-thickness: 0.25rem;
+}

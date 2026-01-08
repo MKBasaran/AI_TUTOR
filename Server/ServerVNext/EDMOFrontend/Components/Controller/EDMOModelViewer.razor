@@ -1,0 +1,53 @@
+@using EDMOFrontend.Components.Pages
+@using ServerCore.EDMO
+@using ServerCore.EDMO.Communication.Packets
+@implements IAsyncDisposable
+
+<canvas class="renderCanvas" id="EDMOCanvas" stupidTestAttribute="@($"{instanceCount}")"></canvas>
+
+@code {
+
+    private int t = 0;
+    private int instanceCount => ++t; 
+    [Inject] private IJSRuntime jsRuntime { get; set; } = null!;
+    [CascadingParameter(Name = "ControlContext")]public EDMOSession.ControlContext ControlContext { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ControlContext.OscillatorDataReceived += oscillatorDataReceived;
+            try
+            {
+                await jsRuntime.InvokeVoidAsync("EDMOModelViewer.disposeCanvas");
+                await jsRuntime.InvokeVoidAsync("EDMOModelViewer.loadCanvas");
+                await jsRuntime.InvokeVoidAsync("EDMOModelViewer.setColour", ControlContext.AssignedHueOf(ControlContext.Index));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void oscillatorDataReceived(OscillatorDataPacket packet)
+    {
+        try
+        {
+            await jsRuntime.InvokeVoidAsync("EDMOModelViewer.synchroniseState", packet.OscillatorState);
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        ControlContext.OscillatorDataReceived -= oscillatorDataReceived;
+        await jsRuntime.InvokeVoidAsync("EDMOModelViewer.disposeCanvas");
+    }
+
+}

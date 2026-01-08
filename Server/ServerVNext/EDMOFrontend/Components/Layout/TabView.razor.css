@@ -1,0 +1,35 @@
+.tabPanel {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.tab {
+    align-self: flex-end;
+    border-radius: 0.5rem;
+    background-color: transparent;
+    color: white;
+    padding: 1rem;
+    font-size: 1.5rem;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.selected {
+    background-color: var(--baseTextColor);
+    transition: var(--colorTransition);
+}
+
+.panelArea {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    flex: 1;
+    max-height: 100%;
+}
+
+.panelContent {
+    display: flex;
+    flex: 1;
+    overflow-y: auto;
+}

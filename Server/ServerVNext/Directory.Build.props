@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <DocumentationFile>bin\$(MSBuildProjectName).xml</DocumentationFile>
+        <!-- The rest is omitted for clarity. -->
+
+        <!-- warning CS1591: Missing XML comment for publicly visible type or member -->
+        <!--<NoWarn>1591</NoWarn>-->
+    </PropertyGroup>
+</Project>

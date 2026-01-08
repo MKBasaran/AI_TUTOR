@@ -1,0 +1,72 @@
+:root {
+    --colorTransition: background-color 300ms, color 300ms;
+    --hue: 300;
+    --backgroundColor: hsl(var(--hue), 50%, 75%);
+
+    --baseLayerColor: hsl(var(--hue), 50%, 55%);
+    --baseAccentColor: hsl(var(--hue), 50%, 65%);
+    --baseTextColor: hsl(var(--hue), 50%, 10%);
+
+    --secondaryBaseColor: hsl(var(--hue), 50%, 35%);
+    --secondaryContentColor: hsl(var(--hue), 60%, 55%);
+
+    --mainLayerShadow: 0 0 1rem 0.5rem rgba(0, 0, 0, 0.3);
+    font-family: sans-serif;
+    font-size: clamp(0.5em, min(1.2dvw, 1.2dvh), 2rem);
+}
+
+a{
+    color: var(--baseLayerColor);
+}
+
+body {
+    background-color: var(--backgroundColor);
+    display: flex;
+    min-height: 100dvh;
+    width: 100dvw;
+    flex-direction: row;
+    margin: 0;
+    transition: var(--colorTransition)
+}
+
+.card{
+    
+}
+
+.grow {
+    flex: 1
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+.alignFlexEnd {
+    align-self: flex-end;
+}
+
+.alignFlexStart {
+    align-self: flex-start;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.alignBottom{
+    margin-top: auto;
+}
+
+.stickyBottom {
+    position: sticky;
+    bottom: 0;
+}

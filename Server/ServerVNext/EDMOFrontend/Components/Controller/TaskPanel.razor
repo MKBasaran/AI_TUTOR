@@ -1,0 +1,37 @@
+@using ServerCore.EDMO.Objectives
+<div class="TaskPanel">
+    @if (ObjectiveGroups.Length == 0)
+    {
+        <h2>
+            <LocalisableString TextKey="noTasks" DefaultText="There are no tasks in this session."/>
+        </h2>
+    }
+    else
+    {
+        foreach (var group in ObjectiveGroups)
+        {
+            <div>
+                <div>
+                    <h2>
+                        @group.Title
+                    </h2>
+                    @if (group.Description is not null)
+                    {
+                        <h3>@group.Description</h3>
+                    }
+                </div>
+
+                <div class="ObjectiveList">
+                    @foreach (var obj in group.Objectives)
+                    {
+                        <TaskCard Objective="obj"/>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public EDMOObjectiveGroup[] ObjectiveGroups { get; set; } = null!;
+}

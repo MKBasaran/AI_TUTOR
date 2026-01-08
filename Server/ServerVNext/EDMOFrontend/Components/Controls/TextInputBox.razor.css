@@ -1,0 +1,19 @@
+div.textBoxArea{
+    background-color: var(--backgroundColor);
+    padding: 1rem;
+    border-radius: 1rem;
+    transition: var(--colorTransition);
+    box-sizing: content-box;
+}
+
+input{
+    background: transparent;
+    outline: none;
+    border: none;
+    padding: 0;
+    flex: 1;
+    resize: vertical;
+    width: 100%;
+    font-size: medium;
+    font-weight: bold;
+}

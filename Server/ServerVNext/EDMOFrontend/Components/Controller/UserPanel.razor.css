@@ -1,0 +1,17 @@
+.playerCard {
+    --baseAccentColor: hsl(var(--hue), 50%, 65%);
+    --baseTextColor: hsl(var(--hue), 50%, 10%);
+    display: flex;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 1rem;
+    background-color: var(--baseAccentColor);
+    color: var(--baseTextColor);
+    align-items: center;
+    text-decoration: none;
+    transition: var(--colorTransition), transform 100ms;
+}
+
+.userPanel{
+    gap: 1rem
+}

@@ -1,0 +1,59 @@
+{
+  "requestHelp": {
+    "en": "Request help",
+    "nl": "Hulp aanvragen"
+  },
+  "unrequestHelp": {
+    "en": "Undo help request",
+    "nl": "Hulpverzoek ongedaan maken"
+  },
+  "frequency": {
+    "en": "Speed",
+    "nl": "Snelheid"
+  },
+  "amplitude": {
+    "en": "Range",
+    "nl": "Omvang"
+  },
+  "offset": {
+    "en": "Baseline position",
+    "nl": "Startpunt"
+  },
+  "relation": {
+    "en": "Relation",
+    "nl": "Relatie"
+  },
+  "resetSliders": {
+    "en": "Reset values",
+    "nl": "Waarden resetten"
+  },
+  "noPlayers": {
+    "en": "There are no players in this session.",
+    "nl": "Er zijn geen spelers in deze sessie."
+  },
+  "playerIsYou": {
+    "en": "{0} (You)",
+    "nl": "{0} (Jij)"
+  },
+  "playerIsBabaIsYou": {
+    "en": "[{0}] is [You]",
+    "nl": "[{0}] ben [Jij]"
+  },
+  "noTasks": {
+    "en": "There are no tasks in this session.",
+    "nl": "Er zijn geen taken in deze sessie."
+  },
+  "tasksCompleted": {
+    "en": "You've completed all tasks",
+    "nl": "Je hebt alle taken voltooid"
+  },
+  "somethingWentWrong": {
+    "en": "Something went wrong. Sorry about that."
+  },
+  "incidentLogged": {
+    "en": "This incident has been logged for future analysis."
+  },
+  "exceptionForOperator": {
+    "en": "Exception content for operator:"
+  }
+}

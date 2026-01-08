@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ServerCore\ServerCore.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Resources\**\*"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\ControllerScene.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\ControllerScene.js.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\EdmoModel.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\EdmoModel.js.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\EdmoProperty.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\scripts\EdmoProperty.js.map" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="npm\package-lock.json" />
+      <None Include="npm\package-lock.json">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <Content Remove="npm\package.json" />
+      <None Include="npm\package.json">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+      <Content Remove="npm\tsconfig.json" />
+      <None Include="npm\tsconfig.json">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+    
+    <Target Name="NpmBuild" AfterTargets="Compile">
+        <Exec Command="npm install" WorkingDirectory="npm" />
+        <Exec Command="npm run build-dev" WorkingDirectory="npm" Condition="'$(Configuration)' == 'Debug'" />
+        <Exec Command="npm run build" WorkingDirectory="npm" Condition="'$(Configuration)' == 'Release'" />
+    </Target>
+
+    <Target Name="CreatePluginsFolderBuild" AfterTargets="Build">
+        <MakeDir Directories="$(OutDir)Plugins" Condition="!Exists('$(OutDir)Plugins')"/>
+    </Target>
+    <Target Name="CreatePluginsFolderPublish" AfterTargets="Publish">
+        <MakeDir Directories="$(PublishDir)Plugins" Condition="!Exists('$(PublishDir)Plugins')"/>
+    </Target>
+
+</Project>

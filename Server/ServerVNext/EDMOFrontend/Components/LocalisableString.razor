@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@implements IDisposable
+
+@localisedString
+
+@code {
+    [Inject] LocalisationContext localisationContext { get; set; }
+
+    [CascadingParameter(Name = "LocalisationBank")]
+    public string BankName { get; set; } = "Null";
+
+    [Parameter] [EditorRequired] public string TextKey { get; set; }
+    [Parameter] public string DefaultText { get; set; } = "";
+    [Parameter] public object?[] Args { get; set; } = [];
+
+    private string localisedString = "";
+
+    protected override Task OnInitializedAsync()
+    {
+        localisedString = DefaultText;
+        localisationContext.LocaleChanged += onLocaleChanged;
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await InvokeAsync(onLocaleChanged);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void onLocaleChanged()
+    {
+        try
+        {
+            localisedString = await localisationContext.GetLocalisedString(BankName, TextKey, Args) ?? DefaultText;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            //Ignored because we don't want to kill the server
+        }
+    }
+
+
+    public static implicit operator LocalisableString(string str) => new()
+    {
+        DefaultText = str
+    };
+
+    public void Dispose()
+    {
+        localisationContext.LocaleChanged -= onLocaleChanged;
+    }
+
+}

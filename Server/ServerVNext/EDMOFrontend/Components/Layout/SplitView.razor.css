@@ -1,0 +1,19 @@
+.splitPanel {
+    flex: 1;
+    display: flex;
+    max-height: 100vh;
+}
+
+.splitView {
+    display: flex;
+    flex: 1;
+}
+
+@media screen and (orientation: portrait) {
+    .splitView{
+        flex-direction: column;
+    }
+    .splitPanel{
+        max-height: 50vh;
+    }
+}

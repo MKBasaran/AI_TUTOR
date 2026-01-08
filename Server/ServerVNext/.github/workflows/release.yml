@@ -1,0 +1,70 @@
+name: Tagged Release
+on:
+  push:
+    tags: ['*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target-runtime: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64,osx-arm64]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    # Get current tag 
+    - name: Fetch all tags
+      run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    - name: Get current tag
+      run: echo "CURRENT_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+
+    # Publish
+    - name: Build
+      run: dotnet publish EDMOFrontend --configuration Release -p:version=${{ env.CURRENT_TAG }} -r ${{matrix.target-runtime}} --self-contained --p:UseAppHost=true --p:PublishSingleFile=true
+      
+        # Zip up content
+    - name: Compress published directory
+      uses: somaz94/compress-decompress@v1
+      with:
+          command: compress
+          format: zip
+          source: "EDMOFrontend/bin/Release/net9.0/${{matrix.target-runtime}}/publish/"
+          destfilename: "EDMOFrontend_${{matrix.target-runtime}}"
+          dest: "./"
+          includeRoot: false
+          
+    # Upload artifact
+    - uses: actions/upload-artifact@v4
+      with:
+        name: EDMOFrontend_${{matrix.target-runtime}}
+        path: EDMOFrontend_${{matrix.target-runtime}}.zip
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v5
+      with:
+        path: ./
+        pattern: EDMOFrontend_*
+        merge-multiple: true
+
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.RELEASE_TOKEN }}
+        files: EDMOFrontend_*.zip
+        draft: true
+    

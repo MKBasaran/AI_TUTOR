@@ -1,0 +1,149 @@
+@page "/controller"
+@implements IDisposable
+@using System.Diagnostics
+@using EDMOFrontend.Components.Controller
+@using EDMOFrontend.Components.Controls
+@using EDMOFrontend.Components.Layout
+@using ServerCore.EDMO
+@using ServerCore.EDMO.Objectives
+
+@*We specifically don't want to prerender this to avoid the server creating and disposal a session connection through multiple initialisation.*@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<CascadingValue Value="@("controller")" Name="LocalisationBank">
+    <CascadingValue Value="@controlContext" Name="ControlContext">
+        <SplitView>
+            <Left>
+                <div class="viewportArea">
+                    <TopBar>
+                        <a title="Leave room" href="/" id="quitButton">
+                            <i class="fa-solid fa-door-open icon"></i>
+                        </a>
+                        <TaskBubble ObjectiveGroups="objectiveGroups"/>
+                    </TopBar>
+                    @if (controlContext is not null)
+                    {
+                        <EDMOModelViewer/>
+                    }
+                </div>
+            </Left>
+            <Right>
+                <Card>
+                    @if (controlContext is not null)
+                    {
+                        <TabView tabIcon="tabIcons" tabContents="tabContent"/>
+                    }
+                    else
+                    {
+                        <div>
+                            <h1>🙇</h1>
+                            <h2>
+                                <LocalisableString TextKey="somethingWentWrong"
+                                                   DefaultText="Something went wrong. Sorry about that."/>
+                            </h2>
+                            <h3>
+                                <LocalisableString TextKey="incidentLogged"
+                                                   DefaultText="This incident has been logged for future analysis."/>
+                            </h3>
+                            <br/>
+                            <h3>
+                                <LocalisableString TextKey="exceptionForOperator"
+                                                   DefaultText="Exception content for operator:"/>
+                            </h3>
+                            <h4>@errorMessage</h4>
+                        </div>
+                    }
+                </Card>
+            </Right>
+        </SplitView>
+    </CascadingValue>
+</CascadingValue>
+
+<script>
+    setupUnloadDisposal = (objRef) => {
+        window.onbeforeunload = function (_) {
+            objRef.invokeMethodAsync("Dispose");
+        };
+    }
+</script>
+
+@if (controlContext is not null)
+{
+    <style>
+        :root {
+            --hue:  @controlContext.AssignedHueOf(controlContext.Index)
+        }
+    </style>
+}
+
+@code{
+    private DotNetObjectReference<ControllerPage>? objRef;
+
+    private RenderFragment[] tabIcons = [];
+    private RenderFragment?[] tabContent = [];
+
+    [Inject] public IJSRuntime jsRuntime { get; set; }
+    [Inject] public EDMOSessionManager sessionManager { get; set; }
+
+    private EDMOSession.ControlContext? controlContext { get; set; } = null!;
+    private EDMOObjectiveGroup[]? objectiveGroups = null;
+
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        objRef = DotNetObjectReference.Create(this);
+
+        try
+        {
+            controlContext = sessionManager.AttemptConnectionTo(SessionIdentifier, Name);
+        }
+        catch (Exception e)
+        {
+            errorMessage = e.ToString();
+            return;
+        }
+
+        Debug.Assert(controlContext is not null);
+        objectiveGroups = [..controlContext.ObjectiveGroups];
+
+        tabIcons =
+        [
+            @<Icon Glyph="gamepad" FontSize="3rem">&nbsp;@controlContext.Index</Icon>,
+            @<Icon Glyph="list" FontSize="3rem"/>,
+            @<Icon Glyph="user-group" FontSize="3rem"/>,
+        ];
+
+
+        tabContent =
+        [
+            @<SliderPanel/>,
+            @<TaskPanel ObjectiveGroups="[..controlContext.ObjectiveGroups]"/>,
+            @<UserPanel/>
+        ];
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await jsRuntime.InvokeVoidAsync("setupUnloadDisposal", objRef);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    [SupplyParameterFromQuery(Name = "sessionIdentifier")]
+    public string SessionIdentifier { get; set; } = "Test";
+
+    [SupplyParameterFromQuery(Name = "name")]
+    public string Name { get; set; } = "Test";
+
+    [JSInvokable]
+    public void Dispose()
+    {
+        controlContext?.Dispose();
+        objRef?.Dispose();
+    }
+
+}

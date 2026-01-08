@@ -1,0 +1,14 @@
+.bubble {
+    background-color: var(--baseLayerColor);
+    color: var(--baseTextColor);
+    font-size: larger;
+    font-weight: bold;
+    flex: 1 1 auto;
+    margin: 2%;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    opacity: 0.8;
+    transition: var(--colorTransition), transform 150ms;
+    z-index: -1;
+    transform-origin: left;
+}

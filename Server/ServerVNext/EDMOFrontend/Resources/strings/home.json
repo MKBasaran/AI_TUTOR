@@ -1,0 +1,30 @@
+{
+  "name": {
+    "en": "Name",
+    "nl": "Naam"
+  },
+  "controllerSetup": {
+    "en": "Controller setup",
+    "nl": "Controller-instelling"
+  },
+  "controllerSetupDesc": {
+    "en": "Enter your name and select the robot you've been assigned to",
+    "nl": "Voer je naam in en selecteer de robot waaraan je bent toegewezen"
+  },
+  "selectEdmo": {
+    "en": "Select your EDMO",
+    "nl": "Selecteer je EDMO"
+  },
+  "letsStart": {
+    "en": "Let's start!",
+    "nl": "Laten we beginnen!"
+  },
+  "nameInputPlaceholder": {
+    "en": "Enter your name",
+    "nl": "Vul je naam in"
+  },
+  "noActiveEdmos": {
+    "en": "No EDMOs are active at this moment.",
+    "nl": "Er zijn op dit moment geen EDMO's actief."
+  }
+}

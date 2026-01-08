@@ -1,0 +1,41 @@
+@using ServerCore.EDMO.Objectives
+@implements IDisposable
+<div class="taskCard">
+    <div class="flex" style="gap: 1rem">
+        @if (Objective.Completed)
+        {
+            <div class="taskTitle">
+                ✅
+            </div>
+        }
+        <div class="@(Objective.Completed ? "completed" : "")">
+            <div class="taskTitle">
+                @Objective.Title
+            </div>
+            @if (Objective.Description is not null)
+            {
+                @Objective.Description
+            }
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public EDMOObjective Objective { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Objective.ObjectiveCompleted += objectiveCompleted;
+        base.OnInitialized();
+    }
+
+    private void objectiveCompleted() =>
+        InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Objective.ObjectiveCompleted -= objectiveCompleted;
+    }
+
+}

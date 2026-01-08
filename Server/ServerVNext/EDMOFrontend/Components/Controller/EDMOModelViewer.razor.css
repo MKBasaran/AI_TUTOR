@@ -1,0 +1,7 @@
+.renderCanvas {
+    height: 100%;
+    width: 100%;
+    display: block;
+    outline: none;
+    transition: height 200ms, width 200ms;
+}

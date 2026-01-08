@@ -1,0 +1,27 @@
+<div class="textBoxArea" style="@styleString">
+    <input type="text" @bind:event="onchange" @bind:get="Text" @bind:set="onInputChanged" placeholder="@Placeholder"
+           maxlength="@CharacterLimit"/>
+</div>
+
+@code {
+
+    private string styleString
+    {
+        get
+        {
+            if (CharacterLimit is null || !FitTextBoxToLimit)
+                return string.Empty;
+
+            return $"width:{CharacterLimit.Value}ch";
+        }
+    }
+    
+    [Parameter] public int? CharacterLimit { get; set; }
+    [Parameter] public bool FitTextBoxToLimit { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "";
+
+    [Parameter] public string Text { get; set; }
+    [Parameter] public EventCallback<string> TextChanged { get; set; }
+
+    private async Task onInputChanged(string newInput) => await TextChanged.InvokeAsync(newInput);
+}

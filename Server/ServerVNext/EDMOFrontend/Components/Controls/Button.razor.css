@@ -1,0 +1,15 @@
+.button {
+    border-radius: 0.5rem;
+    background-color: var(--baseTextColor);
+    color: white;
+    padding: 1rem;
+    font-size: 1.5rem;
+    transition: var(--colorTransition);
+    cursor: pointer;
+}
+
+.disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+

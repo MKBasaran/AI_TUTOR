@@ -1,0 +1,84 @@
+@using Microsoft.AspNetCore.Mvc
+<div class="choiceGroup">
+    @for (int i = 0; i < options.Length; ++i)
+    {
+        int j = i;
+        <ChoiceButton @bind-Selected="selectionStates[j]"
+                      OnClick="async () => await OnClickHandler(j)">@(options[j])</ChoiceButton>
+    }
+</div>
+
+@code {
+    private bool[] selectionStates = [];
+
+    private string? current;
+
+    [Parameter]
+    public string? Current
+    {
+        get => current;
+        set
+        {
+            if (string.Equals(current, value))
+                return;
+
+            for (int i = 0; i < options.Length; ++i)
+            {
+                if (!string.Equals(options[i], value)) continue;
+
+                Array.Clear(selectionStates);
+                selectionStates[i] = true;
+                current = value;
+                return;
+            }
+
+            current = null;
+        }
+    }
+
+    [Parameter] public EventCallback<string?> CurrentChanged { get; set; }
+
+    private string[] options = [];
+
+    [Parameter]
+    public string[] Options
+    {
+        get => options;
+        set
+        {
+            if (options == value)
+                return;
+
+            options = value;
+            selectionStates = new bool[options.Length];
+
+            if (options.Length == 0)
+                return;
+
+            var index = Array.IndexOf(options, Current);
+
+            if (index == -1)
+            {
+                if (current is not null)
+                    CurrentChanged.InvokeAsync(null);
+                current = null;
+                return;
+            }
+
+            selectionStates[index] = true;
+        }
+    }
+
+    private async Task OnClickHandler(int index)
+    {
+        for (int i = 0; i < Options.Length; ++i)
+            selectionStates[i] = i == index;
+
+        if (string.Equals(Current, Options[index]))
+            return;
+
+        await CurrentChanged.InvokeAsync(Options[index]);
+    }
+
+}
+

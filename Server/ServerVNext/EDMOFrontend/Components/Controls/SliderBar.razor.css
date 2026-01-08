@@ -1,0 +1,13 @@
+.sliderbox {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.slider {
+    accent-color: var(--backgroundColor);
+    flex: 1;
+    transition: var(--colorTransition), accent-color 300ms;
+    touch-action: none;
+    flex: 8;
+}

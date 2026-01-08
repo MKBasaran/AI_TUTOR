@@ -1,0 +1,54 @@
+@using EDMOFrontend.Components.Pages
+@using ServerCore.EDMO
+@implements IDisposable
+<div class="flex flex-column grow userPanel">
+    @foreach (var (index, name) in ControlContext.Players)
+    {
+        <div class="playerCard" style="--hue:@ControlContext.AssignedHueOf(index)">
+            <h2>
+                @if (index == ControlContext.Index)
+                {
+                    bool playerIsBaba = name.ToLowerInvariant().AsSpan().Trim() is "baba";
+
+                    if (playerIsBaba)
+                    {
+                        string defaultText = $"[{name}] is [You]";
+                        <LocalisableString TextKey="playerIsBabaIsYou"
+                                           DefaultText="@defaultText"
+                                           Args="[name]"/>
+                    }
+                    else
+                    {
+                        string defaultText = $"{name} (You)";
+                        <LocalisableString TextKey="playerIsYou"
+                                           DefaultText="@defaultText"
+                                           Args="[name]"/>
+                    }
+                }
+                else
+                {
+                    @name
+                }
+            </h2>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "ControlContext")]
+    public EDMOSession.ControlContext ControlContext { get; set; } = null!;
+
+    protected override Task OnInitializedAsync()
+    {
+        ControlContext.PlayerListUpdated += onPlayerUpdated;
+        return base.OnInitializedAsync();
+    }
+
+    private void onPlayerUpdated() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ControlContext.PlayerListUpdated -= onPlayerUpdated;
+    }
+
+}

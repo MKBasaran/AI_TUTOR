@@ -1,0 +1,31 @@
+@using System.Globalization
+<div class="sliderbox">
+    <input type="range" class="slider" min="@Min" max="@Max" step="@Step" @bind:get="@Value"
+           @bind:set="onSliderValueChanged" @bind:event="oninput">
+    <TextInputBox Text="@Value.ToString(CultureInfo.InvariantCulture)"
+                  TextChanged="onTextBoxValueChanged" FitTextBoxToLimit="true" CharacterLimit="6"></TextInputBox>
+</div>
+
+@code {
+    [Parameter] [EditorRequired] public float Min { get; set; }
+    [Parameter] [EditorRequired] public float Max { get; set; }
+    [Parameter] [EditorRequired] public float Step { get; set; }
+
+    [Parameter] public float Value { get; set; }
+    [Parameter] public EventCallback<float> ValueChanged { get; set; }
+
+    private async Task onTextBoxValueChanged(string s)
+    {
+        if (!float.TryParse(s, out float textValue))
+            textValue = Value;
+
+        await onSliderValueChanged(textValue);
+    }
+
+    private async Task onSliderValueChanged(float value)
+    {
+        value = Math.Clamp(value, Min, Max);
+        await ValueChanged.InvokeAsync(value);
+    }
+
+}
