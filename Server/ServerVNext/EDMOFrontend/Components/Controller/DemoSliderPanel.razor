@@ -1,0 +1,62 @@
+@using EDMOFrontend.Components.Controls
+
+<div class="flex flex-column grow">
+    <div class="sliderPanel">
+        <div>
+            <h2>
+                <LocalisableString TextKey="frequency" DefaultText="Speed"/>
+            </h2>
+            <SliderBar Min="0" Max="2" Step="0.1f" Value="Speed"
+                       ValueChanged="SpeedChanged"/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="amplitude" DefaultText="Range"/>
+            </h2>
+            <SliderBar Min="0" Max="90" Step="0.1f" Value="Range"
+                       ValueChanged="RangeChanged"/>
+        </div>
+        <div>
+            <h2>
+                <LocalisableString TextKey="offset" DefaultText="Baseline position"/>
+            </h2>
+            <SliderBar Min="0" Max="180" Step="1f" Value="BaselinePosition"
+                       ValueChanged="BaselinePositionChanged"/>
+        </div>
+
+        <div>
+            <h2>
+                <LocalisableString TextKey="relation" DefaultText="Relation"/>
+            </h2>
+            <DemoRelationWheel Value="Relation" ValueChanged="RelationChanged"/>
+        </div>
+        <div>
+            <ChoiceButton OnClick="ResetButtonClicked">
+                <LocalisableString TextKey="resetSliders" DefaultText="Reset values"/>
+            </ChoiceButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public float Speed { get; set; }
+    [Parameter] public EventCallback<float> SpeedChanged { get; set; }
+
+    [Parameter] public float Range { get; set; }
+    [Parameter] public EventCallback<float> RangeChanged { get; set; }
+
+    [Parameter] public float BaselinePosition { get; set; }
+    [Parameter] public EventCallback<float> BaselinePositionChanged { get; set; }
+
+    [Parameter] public float Relation { get; set; }
+    [Parameter] public EventCallback<float> RelationChanged { get; set; }
+
+    private async Task ResetButtonClicked()
+    {
+        await SpeedChanged.InvokeAsync(0);
+        await RangeChanged.InvokeAsync(0);
+        await BaselinePositionChanged.InvokeAsync(90);
+        await RelationChanged.InvokeAsync(0);
+    }
+}

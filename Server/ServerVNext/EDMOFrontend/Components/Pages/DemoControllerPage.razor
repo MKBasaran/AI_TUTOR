@@ -1,0 +1,224 @@
+@page "/demo"
+@implements IDisposable
+@using System.Threading
+@using EDMOFrontend.Components.Controller
+@using EDMOFrontend.Components.Controls
+@using EDMOFrontend.Components.Layout
+@using EDMOFrontend.Services
+@using ServerCore.EDMO.Objectives
+@using ServerCore.Tutor
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<CascadingValue Value="@("controller")" Name="LocalisationBank">
+    <SplitView>
+        <Left>
+            <div class="viewportArea">
+                <TopBar>
+                    <a title="Leave demo" href="/" id="quitButton">
+                        <i class="fa-solid fa-door-open icon"></i>
+                    </a>
+                    <TaskBubble ObjectiveGroups="objectiveGroups"/>
+                </TopBar>
+                <DemoModelViewer Hue="DemoHue" />
+            </div>
+        </Left>
+        <Right>
+            <Card>
+                <TabView tabIcon="tabIcons" tabContents="tabContent"/>
+            </Card>
+        </Right>
+    </SplitView>
+</CascadingValue>
+
+<style>
+    :root {
+        --hue:  @DemoHue
+    }
+</style>
+
+@code {
+    private RenderFragment[] tabIcons = [];
+    private RenderFragment?[] tabContent = [];
+    private readonly EDMOObjectiveGroup[] objectiveGroups = Array.Empty<EDMOObjectiveGroup>();
+
+    private PeriodicTimer? tutorTimer;
+    private CancellationTokenSource? tutorCts;
+    private readonly SemaphoreSlim submitLock = new(1, 1);
+    private int runCounter;
+    private TutorStatusResponse? tutorStatus;
+
+    private float speed;
+    private float range;
+    private float baseline = 90;
+    private float relation;
+
+    [SupplyParameterFromQuery(Name = "session_id")]
+    public string SessionId { get; set; } = "demo-session";
+
+    [SupplyParameterFromQuery(Name = "leg_id")]
+    public string LegId { get; set; } = "leg-0";
+
+    [Inject] public TutorManager TutorManager { get; set; } = null!;
+
+    private int LegIndex => ParseLegIndex(LegId);
+    private string NormalizedLegId => $"leg-{LegIndex}";
+
+    private int DemoHue => LegIndex switch
+    {
+        0 => 0,
+        1 => 120,
+        2 => 240,
+        3 => 60,
+        _ => 300
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        tabIcons =
+        [
+            @<Icon Glyph="gamepad" FontSize="3rem">&nbsp;@LegIndex</Icon>,
+            @<Icon Glyph="list" FontSize="3rem"/>,
+            @<Icon Glyph="user-group" FontSize="3rem"/>,
+            @<Icon Glyph="lightbulb" FontSize="3rem"/>
+        ];
+
+        tabContent =
+        [
+            @<DemoSliderPanel Speed="speed" SpeedChanged="OnSpeedChanged"
+                              Range="range" RangeChanged="OnRangeChanged"
+                              BaselinePosition="baseline" BaselinePositionChanged="OnBaselineChanged"
+                              Relation="relation" RelationChanged="OnRelationChanged" />,
+            @<TaskPanel ObjectiveGroups="objectiveGroups"/>,
+            @<DemoUserPanel LegIndex="LegIndex"/>,
+            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" />
+        ];
+
+        tutorStatus = await TutorManager.GetStatusAsync(SessionId, NormalizedLegId);
+        StartTutorLoop();
+
+        await base.OnInitializedAsync();
+    }
+
+    private void StartTutorLoop()
+    {
+        tutorCts = new CancellationTokenSource();
+        tutorTimer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        _ = Task.Run(() => SubmitLoopAsync(tutorCts.Token));
+    }
+
+    private async Task SubmitLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (await tutorTimer!.WaitForNextTickAsync(token))
+            {
+                await SubmitTutorTrialAsync(token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore shutdown
+        }
+    }
+
+    private async Task SubmitTutorTrialAsync(CancellationToken token)
+    {
+        await submitLock.WaitAsync(token);
+        try
+        {
+            var parameters = new Dictionary<string, double>
+            {
+                ["speed"] = speed,
+                ["range"] = range,
+                ["baseline_position"] = baseline,
+                ["relation"] = relation
+            };
+
+            var submission = new TrialSubmission(
+                SessionId,
+                $"run-{Interlocked.Increment(ref runCounter)}",
+                DateTimeOffset.UtcNow,
+                parameters,
+                null,
+                speed,
+                NormalizedLegId,
+                null,
+                GoalTypes.Speed);
+
+            var response = await TutorManager.SubmitTrialAsync(submission, token);
+            if (response is null)
+                return;
+
+            tutorStatus = new TutorStatusResponse(
+                response.Stuck,
+                response.Hint ?? tutorStatus?.LastHint,
+                response.HintBudgetRemaining,
+                response.HintAvailable);
+
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            submitLock.Release();
+        }
+    }
+
+    private async Task RequestHint()
+    {
+        var response = await TutorManager.RequestHintAsync(SessionId, NormalizedLegId);
+        if (response is null)
+            return;
+
+        tutorStatus = new TutorStatusResponse(
+            response.Stuck,
+            response.Hint ?? tutorStatus?.LastHint,
+            response.HintBudgetRemaining,
+            response.HintAvailable);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task OnSpeedChanged(float value)
+    {
+        speed = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnRangeChanged(float value)
+    {
+        range = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnBaselineChanged(float value)
+    {
+        baseline = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnRelationChanged(float value)
+    {
+        relation = value;
+        return Task.CompletedTask;
+    }
+
+    private static int ParseLegIndex(string legId)
+    {
+        if (string.IsNullOrWhiteSpace(legId))
+            return 0;
+
+        var trimmed = legId.Trim().ToLowerInvariant();
+        if (trimmed.StartsWith("leg-", StringComparison.Ordinal))
+            trimmed = trimmed[4..];
+
+        return int.TryParse(trimmed, out var index) ? index : 0;
+    }
+
+    public void Dispose()
+    {
+        tutorCts?.Cancel();
+        tutorTimer?.Dispose();
+        submitLock.Dispose();
+        tutorCts?.Dispose();
+    }
+}

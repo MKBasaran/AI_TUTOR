@@ -1,0 +1,24 @@
+<div class="flex flex-column grow userPanel">
+    @foreach (var player in Players)
+    {
+        <div class="playerCard" style="--hue:@player.Hue">
+            <h2>@player.Label</h2>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int LegIndex { get; set; }
+
+    private IEnumerable<(string Label, int Hue)> Players =>
+        new (string Label, int Hue)[]
+        {
+            (LabelFor(0, "Student 1"), 0),
+            (LabelFor(1, "Student 2"), 120),
+            (LabelFor(2, "Student 3"), 240),
+            (LabelFor(3, "Student 4"), 60)
+        };
+
+    private string LabelFor(int index, string name)
+        => index == LegIndex ? $"{name} (You)" : name;
+}

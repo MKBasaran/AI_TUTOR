@@ -4,6 +4,4 @@
     display: block;
     outline: none;
     transition: height 200ms, width 200ms;
-    touch-action: none;
-    overscroll-behavior: contain;
 }

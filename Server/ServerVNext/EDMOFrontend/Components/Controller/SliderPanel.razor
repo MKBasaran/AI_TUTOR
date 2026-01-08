@@ -1,11 +1,12 @@
 @using EDMOFrontend.Components.Controls
 @using ServerCore.EDMO
 @implements IDisposable
+
 <div class="flex flex-column grow">
     <div class="sliderPanel">
         <div>
             <h2>
-                <LocalisableString TextKey="frequency" DefaultText="Frequency"/>
+                <LocalisableString TextKey="frequency" DefaultText="Speed"/>
             </h2>
             <SliderBar Min="0" Max="2" Step="0.1f" Value="ControlContext.Frequency"
                        ValueChanged="OnFrequencyChanged"/>
@@ -13,14 +14,14 @@
 
         <div>
             <h2>
-                <LocalisableString TextKey="amplitude" DefaultText="Amplitude"/>
+                <LocalisableString TextKey="amplitude" DefaultText="Range"/>
             </h2>
             <SliderBar Min="0" Max="90" Step="0.1f" Value="ControlContext.Amplitude"
                        ValueChanged="OnAmplitudeChanged"/>
         </div>
         <div>
             <h2>
-                <LocalisableString TextKey="offset" DefaultText="Offset"/>
+                <LocalisableString TextKey="offset" DefaultText="Baseline position"/>
             </h2>
             <SliderBar Min="0" Max="180" Step="1f" Value="ControlContext.Offset"
                        ValueChanged="OnOffsetChanged"/>
@@ -43,7 +44,7 @@
 @code {
     [CascadingParameter(Name = "ControlContext")]
     public EDMOSession.ControlContext ControlContext { get; set; } = null!;
-    
+
 
     protected override Task OnInitializedAsync()
     {

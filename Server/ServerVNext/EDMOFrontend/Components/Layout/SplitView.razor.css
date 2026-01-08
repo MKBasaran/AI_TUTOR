@@ -2,11 +2,15 @@
     flex: 1;
     display: flex;
     max-height: 100vh;
+    overflow: hidden;
+    min-height: 0;
 }
 
 .splitView {
     display: flex;
     flex: 1;
+    height: 100vh;
+    overflow: hidden;
 }
 
 @media screen and (orientation: portrait) {

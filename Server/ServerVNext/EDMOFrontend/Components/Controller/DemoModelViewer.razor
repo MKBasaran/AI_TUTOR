@@ -1,0 +1,32 @@
+@implements IAsyncDisposable
+
+<canvas class="renderCanvas" id="EDMOCanvas"></canvas>
+
+@code {
+    [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
+    [Parameter] public int Hue { get; set; } = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("EDMOModelViewer.disposeCanvas");
+                await JsRuntime.InvokeVoidAsync("EDMOModelViewer.loadCanvas");
+                await JsRuntime.InvokeVoidAsync("EDMOModelViewer.setColour", Hue);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("EDMOModelViewer.disposeCanvas");
+    }
+}

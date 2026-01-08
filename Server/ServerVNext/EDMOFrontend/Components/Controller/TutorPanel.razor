@@ -1,0 +1,122 @@
+@using EDMOFrontend.Components.Controls
+@using ServerCore.Tutor
+
+<div class="tutorCard">
+    <div class="tutorHeader">
+        <div class="tutorMeta">
+            <span class="tutorLabel">Tutor</span>
+            <span class="statusBadge @StatusClass">@StatusText</span>
+            <span class="tierBadge">@TierLabel</span>
+        </div>
+        <div class="tutorActions">
+            <span class="budget">Hints: @HintBudget</span>
+            <Button Enabled="@HintAvailable" OnClick="OnRequestHint">
+                Get hint
+            </Button>
+        </div>
+    </div>
+
+    <div class="tutorHint">
+        <p>@HintText</p>
+    </div>
+
+    @if (ShowDirections)
+    {
+        <div class="tutorDirections">
+            @foreach (var item in DirectionItems)
+            {
+                <span class="directionPill @DirectionClass(item.Direction)">
+                    @item.Label: @DirectionText(item.Direction)
+                </span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public TutorStatusResponse? Status { get; set; }
+    [Parameter] public EventCallback OnRequestHint { get; set; }
+
+    private string StatusText => Status switch
+    {
+        null => "Waiting for trial data",
+        { Stuck: true } => "Stuck detected",
+        _ => "Progressing"
+    };
+
+    private string StatusClass => Status switch
+    {
+        null => "waiting",
+        { Stuck: true } => "stuck",
+        _ => "ok"
+    };
+
+    private string TierLabel => Status?.LastHint?.Tier switch
+    {
+        HintTier.Reflection => "Reflection",
+        HintTier.Micro => "Micro",
+        HintTier.Pattern => "Pattern",
+        _ => "Hint"
+    };
+
+    private string HintText
+    {
+        get
+        {
+            if (Status?.LastHint is not null)
+                return Status.LastHint.Text;
+
+            if (Status is null)
+                return "Waiting for trial data. Try a few changes first.";
+
+            return "Stuck? Ask for a hint!";
+        }
+    }
+
+    private bool HintAvailable => Status?.HintAvailable == true;
+
+    private int HintBudget => Status?.HintBudgetRemaining ?? 0;
+
+    private bool ShowDirections => Status?.LastHint?.Tier is HintTier.Micro or HintTier.Pattern
+        && Status.LastHint.ParameterDirections.Count > 0;
+
+    private IEnumerable<(string Label, ParameterDirection Direction)> DirectionItems
+    {
+        get
+        {
+            if (Status?.LastHint is null)
+                yield break;
+
+            var directions = Status.LastHint.ParameterDirections;
+            foreach (var entry in OrderedKeys)
+            {
+                if (directions.TryGetValue(entry.Key, out var direction))
+                    yield return (entry.Label, direction);
+            }
+        }
+    }
+
+    private static readonly (string Key, string Label)[] OrderedKeys =
+    [
+        ("speed", "Speed"),
+        ("range", "Range"),
+        ("baseline_position", "Baseline position"),
+        ("relation", "Relation")
+    ];
+
+    private static string DirectionText(ParameterDirection direction)
+        => direction switch
+        {
+            ParameterDirection.Increase => "Increase",
+            ParameterDirection.Decrease => "Decrease",
+            _ => "Keep"
+        };
+
+    private static string DirectionClass(ParameterDirection direction)
+        => direction switch
+        {
+            ParameterDirection.Increase => "up",
+            ParameterDirection.Decrease => "down",
+            _ => "keep"
+        };
+}

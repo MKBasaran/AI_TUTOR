@@ -1,2 +1,33 @@
 Server/ServerVNext/EDMOFrontend/npm/node_modules/
 Server/ServerVNext/EDMOFrontend/bin/Debug/net9.0/Logs
+
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+**/Artifacts/
+**/publish/
+
+# VS / Rider / VS Code
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+
+# Logs
+**/Logs/
+**/*.log
+
+# Node (frontend)
+**/node_modules/
+**/npm-debug.log*
+**/yarn-error.log*
+**/dist/
+**/build/
+
+# Python
+**/__pycache__/
+**/*.pyc

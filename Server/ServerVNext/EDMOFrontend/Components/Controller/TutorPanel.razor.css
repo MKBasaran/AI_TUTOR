@@ -1,0 +1,113 @@
+.tutorCard {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.9rem;
+    background-color: var(--baseAccentColor);
+    color: var(--baseTextColor);
+    width: 100%;
+    max-width: 42rem;
+    align-self: flex-start;
+    margin: 0 auto;
+}
+
+.tutorHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.tutorMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.tutorLabel {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+
+.statusBadge,
+.tierBadge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    background-color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+}
+
+.statusBadge.ok {
+    background-color: rgba(180, 255, 200, 0.8);
+}
+
+.statusBadge.stuck {
+    background-color: rgba(255, 200, 180, 0.85);
+}
+
+.statusBadge.waiting {
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+.tutorActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.budget {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tutorHint {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 0.4rem 0.55rem;
+    border-radius: 0.6rem;
+}
+
+.tutorHint p {
+    margin: 0;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.tutorDirections {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.directionPill {
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.directionPill.up {
+    color: #0b4a24;
+    background-color: rgba(190, 255, 210, 0.8);
+}
+
+.directionPill.down {
+    color: #6a1f1f;
+    background-color: rgba(255, 200, 200, 0.85);
+}
+
+.directionPill.keep {
+    color: #2a3a4a;
+    background-color: rgba(210, 230, 255, 0.8);
+}
