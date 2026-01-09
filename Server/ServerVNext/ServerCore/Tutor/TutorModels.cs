@@ -53,19 +53,34 @@ public record TutorTrialResponse(
     [property: JsonPropertyName("hint")] HintPayload? Hint,
     [property: JsonPropertyName("hint_budget_remaining")] int HintBudgetRemaining,
     [property: JsonPropertyName("hint_available")] bool HintAvailable,
-    [property: JsonPropertyName("diagnostics")] TutorDiagnostics? Diagnostics);
+    [property: JsonPropertyName("diagnostics")] TutorDiagnostics? Diagnostics,
+    [property: JsonPropertyName("hint_mode")] string HintMode,
+    [property: JsonPropertyName("hint_vote_count")] int HintVoteCount,
+    [property: JsonPropertyName("hint_vote_threshold")] int HintVoteThreshold,
+    [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
+    [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
 public record TutorStatusResponse(
     [property: JsonPropertyName("stuck")] bool Stuck,
     [property: JsonPropertyName("last_hint")] HintPayload? LastHint,
     [property: JsonPropertyName("hint_budget_remaining")] int HintBudgetRemaining,
-    [property: JsonPropertyName("hint_available")] bool HintAvailable);
+    [property: JsonPropertyName("hint_available")] bool HintAvailable,
+    [property: JsonPropertyName("hint_mode")] string HintMode,
+    [property: JsonPropertyName("hint_vote_count")] int HintVoteCount,
+    [property: JsonPropertyName("hint_vote_threshold")] int HintVoteThreshold,
+    [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
+    [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
 public record TutorHintResponse(
     [property: JsonPropertyName("stuck")] bool Stuck,
     [property: JsonPropertyName("hint")] HintPayload? Hint,
     [property: JsonPropertyName("hint_budget_remaining")] int HintBudgetRemaining,
-    [property: JsonPropertyName("hint_available")] bool HintAvailable);
+    [property: JsonPropertyName("hint_available")] bool HintAvailable,
+    [property: JsonPropertyName("hint_mode")] string HintMode,
+    [property: JsonPropertyName("hint_vote_count")] int HintVoteCount,
+    [property: JsonPropertyName("hint_vote_threshold")] int HintVoteThreshold,
+    [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
+    [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
 public record TutorHintRequest(
     [property: JsonPropertyName("session_id")] string SessionId,
@@ -102,7 +117,8 @@ public record TutorTrialLogEntry(
     string GoalType,
     bool Stuck,
     HintPayload? Hint,
-    int HintBudgetRemaining);
+    int HintBudgetRemaining,
+    string HintMode);
 
 public record TutorStuckReportEntry(
     DateTimeOffset Timestamp,
@@ -112,4 +128,5 @@ public record TutorStuckReportEntry(
     Dictionary<string, double>? Params,
     double SessionScore,
     bool SystemStuck,
-    bool Accepted);
+    bool Accepted,
+    string HintMode);

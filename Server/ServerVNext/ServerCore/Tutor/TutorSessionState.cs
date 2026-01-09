@@ -9,10 +9,13 @@ public sealed class TutorSessionState
     {
         SessionId = sessionId;
         DefaultHintBudget = hintBudget;
+        GlobalHintBudget = hintBudget;
     }
 
     public string SessionId { get; }
     public int DefaultHintBudget { get; }
+    public int GlobalHintBudget { get; set; }
+    public HashSet<string> HintVotes { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, LegTutorState> Legs { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public LegTutorState GetLeg(string legId)

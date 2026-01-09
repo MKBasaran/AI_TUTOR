@@ -13,6 +13,9 @@ public sealed class TutorOptions
     public double ProgressThreshold { get; set; } = 0.02;
     public double ParamDeltaEpsilon { get; set; } = 0.05;
     public bool IncludeDiagnostics { get; set; } = false;
+    public string HintMode { get; set; } = "per_leg";
+    public int HintVoteThreshold { get; set; } = 3;
+    public int HintVoteTotal { get; set; } = 4;
 
     public string ResolveStuckDetectorPath(string contentRoot)
     {

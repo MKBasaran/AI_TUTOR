@@ -1,5 +1,7 @@
+@using System.Threading
 @using EDMOFrontend.Components.Controls
 @using ServerCore.Tutor
+@implements IDisposable
 
 <div class="tutorCard">
     <div class="tutorHeader">
@@ -12,12 +14,12 @@
             <span class="budget">Hints: @HintBudget</span>
             @if (ReportAvailable)
             {
-                <Button Enabled="true" OnClick="OnReportStuck">
-                    Mark stuck
+                <Button Enabled="@ReportEnabled" OnClick="HandleReportStuck">
+                    @ReportLabel
                 </Button>
             }
             <Button Enabled="@HintAvailable" OnClick="OnRequestHint">
-                Get hint
+                @HintButtonLabel
             </Button>
         </div>
     </div>
@@ -40,6 +42,11 @@
 </div>
 
 @code {
+    private static readonly TimeSpan ReportCooldown = TimeSpan.FromSeconds(15);
+    private CancellationTokenSource? reportCts;
+    private bool reportInFlight;
+    private bool reportCooldown;
+
     [Parameter] public TutorStatusResponse? Status { get; set; }
     [Parameter] public EventCallback OnRequestHint { get; set; }
     [Parameter] public EventCallback OnReportStuck { get; set; }
@@ -80,9 +87,25 @@
         }
     }
 
+    private bool IsGlobalHintMode => string.Equals(Status?.HintMode, "global_majority", StringComparison.OrdinalIgnoreCase);
+    private int HintVoteCount => Status?.HintVoteCount ?? 0;
+    private int HintVoteTotal => Status?.HintVoteTotal ?? 0;
+
+    private string HintButtonLabel => IsGlobalHintMode
+        ? $"Get hint ({HintVoteCount}/{HintVoteTotal})"
+        : "Get hint";
+
     private bool HintAvailable => Status?.HintAvailable == true;
 
     private bool ReportAvailable => Status is not null && !Status.Stuck;
+
+    private bool ReportEnabled => ReportAvailable && !reportInFlight && !reportCooldown;
+
+    private string ReportLabel => reportInFlight
+        ? "Submitting..."
+        : reportCooldown
+            ? "Reported"
+            : "Mark stuck";
 
     private int HintBudget => Status?.HintBudgetRemaining ?? 0;
 
@@ -113,6 +136,35 @@
         ("relation", "Relation")
     ];
 
+    private async Task HandleReportStuck()
+    {
+        if (!ReportEnabled)
+            return;
+
+        reportInFlight = true;
+        await InvokeAsync(StateHasChanged);
+
+        await OnReportStuck.InvokeAsync();
+
+        reportInFlight = false;
+        reportCooldown = true;
+        await InvokeAsync(StateHasChanged);
+
+        reportCts?.Cancel();
+        reportCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(ReportCooldown, reportCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        reportCooldown = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private static string DirectionText(ParameterDirection direction)
         => direction switch
         {
@@ -128,4 +180,10 @@
             ParameterDirection.Decrease => "down",
             _ => "keep"
         };
+
+    public void Dispose()
+    {
+        reportCts?.Cancel();
+        reportCts?.Dispose();
+    }
 }

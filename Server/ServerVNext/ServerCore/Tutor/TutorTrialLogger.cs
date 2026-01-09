@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +10,7 @@ namespace ServerCore.Tutor;
 
 public sealed class TutorTrialLogger : ITrialLogger, IDisposable
 {
-    private readonly StreamWriter writer;
+    private readonly ConcurrentDictionary<string, StreamWriter> writers = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim writeLock = new(1, 1);
     private readonly JsonSerializerOptions jsonOptions = new()
     {
@@ -17,18 +18,11 @@ public sealed class TutorTrialLogger : ITrialLogger, IDisposable
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public TutorTrialLogger()
-    {
-        Directory.CreateDirectory(StandardLogs.DEFAULT_LOG_DIRECTORY.FullName);
-        var logPath = Path.Combine(StandardLogs.DEFAULT_LOG_DIRECTORY.FullName, "tutor_trials.jsonl");
-        writer = new StreamWriter(logPath, append: true)
-        {
-            AutoFlush = true
-        };
-    }
-
     public void Log(TutorTrialLogEntry entry)
     {
+        var logPath = ResolveLogPath(entry.SessionId, entry.Timestamp, "tutor_trials.jsonl");
+        var writer = writers.GetOrAdd(logPath, CreateWriter);
+
         writeLock.Wait();
         try
         {
@@ -43,7 +37,44 @@ public sealed class TutorTrialLogger : ITrialLogger, IDisposable
 
     public void Dispose()
     {
-        writer.Dispose();
+        foreach (var writer in writers.Values)
+            writer.Dispose();
+
         writeLock.Dispose();
+    }
+
+    private static StreamWriter CreateWriter(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        return new StreamWriter(path, append: true)
+        {
+            AutoFlush = true
+        };
+    }
+
+    private static string ResolveLogPath(string sessionId, DateTimeOffset timestamp, string fileName)
+    {
+        var safeSession = SanitizeSegment(sessionId);
+        var dateSegment = timestamp.ToString("yyyyMMdd");
+        return Path.Combine(StandardLogs.DEFAULT_LOG_DIRECTORY.FullName, "Sessions", dateSegment, safeSession, fileName);
+    }
+
+    private static string SanitizeSegment(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "session";
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = value.Trim().ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            if (Array.IndexOf(invalid, chars[i]) >= 0)
+                chars[i] = '_';
+        }
+
+        return new string(chars);
     }
 }

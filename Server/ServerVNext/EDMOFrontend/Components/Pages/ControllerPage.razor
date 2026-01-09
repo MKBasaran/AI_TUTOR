@@ -199,7 +199,12 @@
                 response.Stuck,
                 response.Hint ?? tutorStatus?.LastHint,
                 response.HintBudgetRemaining,
-                response.HintAvailable);
+                response.HintAvailable,
+                response.HintMode,
+                response.HintVoteCount,
+                response.HintVoteThreshold,
+                response.HintVoteTotal,
+                response.HintVoted);
 
             await InvokeAsync(StateHasChanged);
         }
@@ -219,7 +224,12 @@
             response.Stuck,
             response.Hint ?? tutorStatus?.LastHint,
             response.HintBudgetRemaining,
-            response.HintAvailable);
+            response.HintAvailable,
+            response.HintMode,
+            response.HintVoteCount,
+            response.HintVoteThreshold,
+            response.HintVoteTotal,
+            response.HintVoted);
 
         await InvokeAsync(StateHasChanged);
     }

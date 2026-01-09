@@ -105,7 +105,10 @@ public sealed class TutorSessionManager
 
         leg.LastStuck = stuck;
 
-        var hintAvailable = stuck && leg.HintBudget > 0 && !leg.HintLocked;
+        var hintMode = GetHintMode();
+        var hintBudgetRemaining = GetHintBudgetRemaining(session, leg);
+        var hintAvailable = GetHintAvailable(session, leg, stuck);
+        var (voteCount, voteThreshold, voteTotal, voted) = GetVoteStatus(session, legId);
 
         var diagnostics = options.IncludeDiagnostics
             ? new TutorDiagnostics(leg.History.Count, leg.StuckStreak, leg.CurrentTier)
@@ -114,9 +117,14 @@ public sealed class TutorSessionManager
         var response = new TutorTrialResponse(
             stuck,
             leg.LastHint,
-            leg.HintBudget,
+            hintBudgetRemaining,
             hintAvailable,
-            diagnostics);
+            diagnostics,
+            hintMode,
+            voteCount,
+            voteThreshold,
+            voteTotal,
+            voted);
 
         trialLogger.Log(new TutorTrialLogEntry(
             submission.Timestamp,
@@ -130,7 +138,8 @@ public sealed class TutorSessionManager
             goalType,
             stuck,
             leg.LastHint,
-            leg.HintBudget));
+            hintBudgetRemaining,
+            hintMode));
 
         return response;
     }
@@ -144,12 +153,24 @@ public sealed class TutorSessionManager
 
         if (!sessions.TryGetValue(sessionId, out var session))
         {
-            return new TutorStatusResponse(false, null, options.HintBudget, false);
+            return new TutorStatusResponse(false, null, options.HintBudget, false, GetHintMode(), 0, 0, 0, false);
         }
 
         var leg = session.GetLeg(legId);
-        var hintAvailable = leg.LastStuck && leg.HintBudget > 0 && !leg.HintLocked;
-        return new TutorStatusResponse(leg.LastStuck, leg.LastHint, leg.HintBudget, hintAvailable);
+        var hintAvailable = GetHintAvailable(session, leg, leg.LastStuck);
+        var hintBudgetRemaining = GetHintBudgetRemaining(session, leg);
+        var (voteCount, voteThreshold, voteTotal, voted) = GetVoteStatus(session, legId);
+
+        return new TutorStatusResponse(
+            leg.LastStuck,
+            leg.LastHint,
+            hintBudgetRemaining,
+            hintAvailable,
+            GetHintMode(),
+            voteCount,
+            voteThreshold,
+            voteTotal,
+            voted);
     }
 
     public TutorHintResponse RequestHint(string sessionId, string legId)
@@ -161,18 +182,21 @@ public sealed class TutorSessionManager
         var session = sessions.GetOrAdd(sessionId, id => new TutorSessionState(id, options.HintBudget));
         var leg = session.GetLeg(legId);
 
+        if (IsGlobalHintMode())
+            return RequestGlobalHint(session, leg, legId);
+
         if (!leg.LastStuck)
-            return new TutorHintResponse(false, leg.LastHint, leg.HintBudget, false);
+            return new TutorHintResponse(false, leg.LastHint, leg.HintBudget, false, GetHintMode(), 0, 0, 0, false);
 
         if (leg.HintLocked)
-            return new TutorHintResponse(true, leg.LastHint, leg.HintBudget, false);
+            return new TutorHintResponse(true, leg.LastHint, leg.HintBudget, false, GetHintMode(), 0, 0, 0, false);
 
         if (leg.HintBudget <= 0)
         {
             var limitHint = hintGenerator.CreateHint(leg.CurrentTier, new Dictionary<string, ParameterDirection>(),
                 new SafetyFlags(), true, GoalTypes.Speed);
             leg.LastHint = limitHint;
-            return new TutorHintResponse(true, leg.LastHint, leg.HintBudget, false);
+            return new TutorHintResponse(true, leg.LastHint, leg.HintBudget, false, GetHintMode(), 0, 0, 0, false);
         }
 
         var directions = hintGenerator.SuggestDirections(leg.History, legId);
@@ -188,7 +212,7 @@ public sealed class TutorSessionManager
         else
             leg.LastHintParams = null;
 
-        return new TutorHintResponse(true, hint, leg.HintBudget, false);
+        return new TutorHintResponse(true, hint, leg.HintBudget, false, GetHintMode(), 0, 0, 0, false);
     }
 
     public TutorStuckReportResponse ReportStuck(TutorStuckReportRequest request)
@@ -216,11 +240,76 @@ public sealed class TutorSessionManager
             parameters,
             lastRecord?.SessionScore ?? 0,
             systemStuck,
-            accepted);
+            accepted,
+            GetHintMode());
 
         stuckReportLogger.Log(entry);
 
         return new TutorStuckReportResponse(accepted, systemStuck);
+    }
+
+    private TutorHintResponse RequestGlobalHint(TutorSessionState session, LegTutorState leg, string legId)
+    {
+        var hintMode = GetHintMode();
+        var hintBudgetRemaining = GetHintBudgetRemaining(session, leg);
+        var (voteCount, voteThreshold, voteTotal, voted) = GetVoteStatus(session, legId);
+
+        if (!leg.LastStuck)
+            return new TutorHintResponse(false, leg.LastHint, hintBudgetRemaining, false, hintMode, voteCount, voteThreshold, voteTotal, voted);
+
+        if (leg.HintLocked)
+            return new TutorHintResponse(true, leg.LastHint, hintBudgetRemaining, false, hintMode, voteCount, voteThreshold, voteTotal, voted);
+
+        if (!session.HintVotes.Contains(legId))
+        {
+            session.HintVotes.Add(legId);
+            voteCount = session.HintVotes.Count;
+            voted = true;
+        }
+
+        var threshold = GetVoteThreshold(session);
+        if (voteCount < threshold)
+        {
+            return new TutorHintResponse(true, leg.LastHint, hintBudgetRemaining, false, hintMode, voteCount, voteThreshold, voteTotal, voted);
+        }
+
+        if (session.GlobalHintBudget <= 0)
+        {
+            foreach (var targetLeg in session.Legs.Values)
+            {
+                var limitHint = hintGenerator.CreateHint(targetLeg.CurrentTier, new Dictionary<string, ParameterDirection>(),
+                    new SafetyFlags(), true, GoalTypes.Speed);
+                targetLeg.LastHint = limitHint;
+                targetLeg.HintLocked = true;
+                targetLeg.LastHintParams = targetLeg.History.Count > 0
+                    ? new Dictionary<string, double>(targetLeg.History[^1].Params)
+                    : null;
+            }
+
+            session.HintVotes.Clear();
+            hintBudgetRemaining = 0;
+            return new TutorHintResponse(true, leg.LastHint, hintBudgetRemaining, false, hintMode, 0, voteThreshold, voteTotal, false);
+        }
+
+        foreach (var targetLeg in session.Legs.Values)
+        {
+            var directions = hintGenerator.SuggestDirections(targetLeg.History, targetLeg.LegId);
+            var lastSafety = targetLeg.History.Count > 0 ? targetLeg.History[^1].Safety : new SafetyFlags();
+            var goalType = targetLeg.History.Count > 0 ? targetLeg.History[^1].GoalType : GoalTypes.Speed;
+
+            var hint = hintGenerator.CreateHint(targetLeg.CurrentTier, directions, lastSafety, false, goalType);
+            targetLeg.LastHint = hint;
+            targetLeg.HintLocked = true;
+            targetLeg.LastHintParams = targetLeg.History.Count > 0
+                ? new Dictionary<string, double>(targetLeg.History[^1].Params)
+                : null;
+        }
+
+        session.GlobalHintBudget -= 1;
+        session.HintVotes.Clear();
+        hintBudgetRemaining = session.GlobalHintBudget;
+
+        return new TutorHintResponse(true, leg.LastHint, hintBudgetRemaining, false, hintMode, 0, voteThreshold, voteTotal, false);
     }
 
     private bool IsProgressing(IReadOnlyList<TutorTrialRecord> history)
@@ -290,6 +379,55 @@ public sealed class TutorSessionManager
         }
 
         return false;
+    }
+
+    private bool IsGlobalHintMode()
+    {
+        var mode = options.HintMode?.Trim() ?? string.Empty;
+        return mode.Equals("global_majority", StringComparison.OrdinalIgnoreCase)
+            || mode.Equals("global", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetHintMode()
+        => IsGlobalHintMode() ? "global_majority" : "per_leg";
+
+    private int GetHintBudgetRemaining(TutorSessionState session, LegTutorState leg)
+        => IsGlobalHintMode() ? session.GlobalHintBudget : leg.HintBudget;
+
+    private bool GetHintAvailable(TutorSessionState session, LegTutorState leg, bool stuck)
+    {
+        if (!stuck || leg.HintLocked)
+            return false;
+
+        if (IsGlobalHintMode())
+            return session.GlobalHintBudget > 0 && !session.HintVotes.Contains(leg.LegId);
+
+        return leg.HintBudget > 0;
+    }
+
+    private (int VoteCount, int VoteThreshold, int VoteTotal, bool Voted) GetVoteStatus(TutorSessionState session, string legId)
+    {
+        if (!IsGlobalHintMode())
+            return (0, 0, 0, false);
+
+        var voteTotal = Math.Max(options.HintVoteTotal, options.HintVoteThreshold);
+        if (voteTotal <= 0)
+            voteTotal = 4;
+
+        var voteThreshold = Math.Clamp(options.HintVoteThreshold, 1, voteTotal);
+        var voteCount = session.HintVotes.Count;
+        var voted = session.HintVotes.Contains(legId);
+
+        return (voteCount, voteThreshold, voteTotal, voted);
+    }
+
+    private int GetVoteThreshold(TutorSessionState session)
+    {
+        var voteTotal = Math.Max(options.HintVoteTotal, options.HintVoteThreshold);
+        if (voteTotal <= 0)
+            voteTotal = 4;
+
+        return Math.Clamp(options.HintVoteThreshold, 1, voteTotal);
     }
 
     private static string NormalizeLegId(string? legId)
