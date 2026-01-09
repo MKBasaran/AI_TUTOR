@@ -11,28 +11,24 @@ public static class OptimalParameters
         {
             ["leg-0"] = new Dictionary<string, double>
             {
-                ["speed"] = 0,
                 ["range"] = 0,
                 ["baseline_position"] = 115,
                 ["relation"] = 0
             },
             ["leg-1"] = new Dictionary<string, double>
             {
-                ["speed"] = 0,
                 ["range"] = 43.9,
                 ["baseline_position"] = 91,
                 ["relation"] = 104
             },
             ["leg-2"] = new Dictionary<string, double>
             {
-                ["speed"] = 0,
                 ["range"] = 0,
                 ["baseline_position"] = 115,
                 ["relation"] = 0
             },
             ["leg-3"] = new Dictionary<string, double>
             {
-                ["speed"] = 0,
                 ["range"] = 60.4,
                 ["baseline_position"] = 110,
                 ["relation"] = 0
@@ -42,7 +38,6 @@ public static class OptimalParameters
     public static readonly IReadOnlyDictionary<string, (double Min, double Max)> ParameterRanges =
         new Dictionary<string, (double Min, double Max)>
         {
-            ["speed"] = (0, 2),
             ["range"] = (0, 90),
             ["baseline_position"] = (0, 180),
             ["relation"] = (0, 360)

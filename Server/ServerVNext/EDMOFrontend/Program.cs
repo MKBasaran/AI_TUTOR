@@ -55,6 +55,7 @@ builder.Services
     .AddSingleton<IStuckDetector>(_ => new PythonStuckDetector(tutorOptions.StuckDetectorPath, tutorOptions.StuckWindow))
     .AddSingleton<HintGenerator>()
     .AddSingleton<ITrialLogger, TutorTrialLogger>()
+    .AddSingleton<IStuckReportLogger, TutorStuckReportLogger>()
     .AddSingleton<TutorSessionManager>()
     .AddHttpClient()
     .AddScoped<TutorManager>()
@@ -85,6 +86,9 @@ app.MapGet("/api/tutor/status", (TutorSessionManager tutor, string session_id, s
 
 app.MapPost("/api/tutor/hint", (TutorSessionManager tutor, TutorHintRequest request) =>
     tutor.RequestHint(request.SessionId, request.LegId));
+
+app.MapPost("/api/tutor/report-stuck", (TutorSessionManager tutor, TutorStuckReportRequest request) =>
+    tutor.ReportStuck(request));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

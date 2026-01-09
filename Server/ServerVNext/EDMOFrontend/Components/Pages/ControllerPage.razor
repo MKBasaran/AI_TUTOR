@@ -131,7 +131,7 @@
             @<SliderPanel/>,
             @<TaskPanel ObjectiveGroups="[..controlContext.ObjectiveGroups]"/>,
             @<UserPanel/>,
-            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" />
+            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck" />
         ];
 
         tutorStatus = await TutorManager.GetStatusAsync(SessionIdentifier, LegId);
@@ -221,6 +221,13 @@
             response.HintBudgetRemaining,
             response.HintAvailable);
 
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ReportStuck()
+    {
+        await TutorManager.ReportStuckAsync(SessionIdentifier, LegId);
+        tutorStatus = await TutorManager.GetStatusAsync(SessionIdentifier, LegId);
         await InvokeAsync(StateHasChanged);
     }
 

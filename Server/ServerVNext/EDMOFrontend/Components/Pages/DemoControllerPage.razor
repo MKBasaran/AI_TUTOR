@@ -90,7 +90,7 @@
                               Relation="relation" RelationChanged="OnRelationChanged" />,
             @<TaskPanel ObjectiveGroups="objectiveGroups"/>,
             @<DemoUserPanel LegIndex="LegIndex"/>,
-            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" />
+            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck" />
         ];
 
         tutorStatus = await TutorManager.GetStatusAsync(SessionId, NormalizedLegId);
@@ -175,6 +175,13 @@
             response.HintBudgetRemaining,
             response.HintAvailable);
 
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ReportStuck()
+    {
+        await TutorManager.ReportStuckAsync(SessionId, NormalizedLegId);
+        tutorStatus = await TutorManager.GetStatusAsync(SessionId, NormalizedLegId);
         await InvokeAsync(StateHasChanged);
     }
 

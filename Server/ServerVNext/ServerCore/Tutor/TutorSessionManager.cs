@@ -10,6 +10,7 @@ public sealed class TutorSessionManager
     private readonly IStuckDetector stuckDetector;
     private readonly HintGenerator hintGenerator;
     private readonly ITrialLogger trialLogger;
+    private readonly IStuckReportLogger stuckReportLogger;
     private readonly TutorOptions options;
     private readonly ConcurrentDictionary<string, TutorSessionState> sessions = new(StringComparer.OrdinalIgnoreCase);
 
@@ -17,11 +18,13 @@ public sealed class TutorSessionManager
         IStuckDetector stuckDetector,
         HintGenerator hintGenerator,
         ITrialLogger trialLogger,
+        IStuckReportLogger stuckReportLogger,
         TutorOptions options)
     {
         this.stuckDetector = stuckDetector;
         this.hintGenerator = hintGenerator;
         this.trialLogger = trialLogger;
+        this.stuckReportLogger = stuckReportLogger;
         this.options = options;
     }
 
@@ -60,13 +63,18 @@ public sealed class TutorSessionManager
 
         var hasChanges = HasMeaningfulParamChange(leg.History);
 
+        if (leg.HintLocked && HasMeaningfulParamChangeSinceHint(leg.LastHintParams, submission.Params))
+        {
+            leg.HintLocked = false;
+            leg.LastHintParams = null;
+        }
+
         bool stuck;
         if (!hasChanges)
         {
             stuck = false;
             leg.StuckStreak = 0;
             leg.CurrentTier = HintTier.Reflection;
-            leg.HintLocked = false;
         }
         else
         {
@@ -77,13 +85,11 @@ public sealed class TutorSessionManager
             if (stuck)
             {
                 leg.StuckStreak += 1;
-                leg.HintLocked = false;
             }
             else
             {
                 leg.StuckStreak = 0;
                 leg.CurrentTier = HintTier.Reflection;
-                leg.HintLocked = false;
             }
 
             if (stuck)
@@ -177,8 +183,44 @@ public sealed class TutorSessionManager
         leg.LastHint = hint;
         leg.HintBudget -= 1;
         leg.HintLocked = true;
+        if (leg.History.Count > 0)
+            leg.LastHintParams = new Dictionary<string, double>(leg.History[^1].Params);
+        else
+            leg.LastHintParams = null;
 
         return new TutorHintResponse(true, hint, leg.HintBudget, false);
+    }
+
+    public TutorStuckReportResponse ReportStuck(TutorStuckReportRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.SessionId))
+            throw new ArgumentException("session_id is required.");
+
+        var legId = NormalizeLegId(request.LegId);
+        var session = sessions.GetOrAdd(request.SessionId, id => new TutorSessionState(id, options.HintBudget));
+        var leg = session.GetLeg(legId);
+
+        var systemStuck = leg.LastStuck;
+        var accepted = !systemStuck;
+
+        TutorTrialRecord? lastRecord = leg.History.Count > 0 ? leg.History[^1] : null;
+        var parameters = lastRecord is null
+            ? new Dictionary<string, double>()
+            : new Dictionary<string, double>(lastRecord.Params);
+
+        var entry = new TutorStuckReportEntry(
+            request.Timestamp ?? DateTimeOffset.UtcNow,
+            request.SessionId,
+            legId,
+            lastRecord?.RunId,
+            parameters,
+            lastRecord?.SessionScore ?? 0,
+            systemStuck,
+            accepted);
+
+        stuckReportLogger.Log(entry);
+
+        return new TutorStuckReportResponse(accepted, systemStuck);
     }
 
     private bool IsProgressing(IReadOnlyList<TutorTrialRecord> history)
@@ -217,6 +259,34 @@ public sealed class TutorSessionManager
                 if (delta > epsilon)
                     return true;
             }
+        }
+
+        return false;
+    }
+
+    private bool HasMeaningfulParamChangeSinceHint(
+        IReadOnlyDictionary<string, double>? reference,
+        IReadOnlyDictionary<string, double> current)
+    {
+        if (reference is null || reference.Count == 0)
+            return true;
+
+        foreach (var parameter in OptimalParameters.ParameterRanges)
+        {
+            var key = parameter.Key;
+            if (!reference.TryGetValue(key, out var referenceValue))
+                continue;
+            if (!current.TryGetValue(key, out var currentValue))
+                continue;
+
+            var epsilon = Math.Max(parameter.Value.Max - parameter.Value.Min, 1) * options.ParamDeltaEpsilon;
+
+            double delta = string.Equals(key, "relation", StringComparison.OrdinalIgnoreCase)
+                ? Math.Abs(OptimalParameters.ShortestAngleDelta(currentValue, referenceValue))
+                : Math.Abs(currentValue - referenceValue);
+
+            if (delta > epsilon)
+                return true;
         }
 
         return false;

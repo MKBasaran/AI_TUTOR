@@ -10,6 +10,12 @@
         </div>
         <div class="tutorActions">
             <span class="budget">Hints: @HintBudget</span>
+            @if (ReportAvailable)
+            {
+                <Button Enabled="true" OnClick="OnReportStuck">
+                    Mark stuck
+                </Button>
+            }
             <Button Enabled="@HintAvailable" OnClick="OnRequestHint">
                 Get hint
             </Button>
@@ -36,6 +42,7 @@
 @code {
     [Parameter] public TutorStatusResponse? Status { get; set; }
     [Parameter] public EventCallback OnRequestHint { get; set; }
+    [Parameter] public EventCallback OnReportStuck { get; set; }
 
     private string StatusText => Status switch
     {
@@ -74,6 +81,8 @@
     }
 
     private bool HintAvailable => Status?.HintAvailable == true;
+
+    private bool ReportAvailable => Status is not null && !Status.Stuck;
 
     private int HintBudget => Status?.HintBudgetRemaining ?? 0;
 

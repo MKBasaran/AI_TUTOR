@@ -71,6 +71,15 @@ public record TutorHintRequest(
     [property: JsonPropertyName("session_id")] string SessionId,
     [property: JsonPropertyName("leg_id")] string LegId);
 
+public record TutorStuckReportRequest(
+    [property: JsonPropertyName("session_id")] string SessionId,
+    [property: JsonPropertyName("leg_id")] string LegId,
+    [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp = null);
+
+public record TutorStuckReportResponse(
+    [property: JsonPropertyName("accepted")] bool Accepted,
+    [property: JsonPropertyName("system_stuck")] bool SystemStuck);
+
 public record TutorTrialRecord(
     DateTimeOffset Timestamp,
     string RunId,
@@ -94,3 +103,13 @@ public record TutorTrialLogEntry(
     bool Stuck,
     HintPayload? Hint,
     int HintBudgetRemaining);
+
+public record TutorStuckReportEntry(
+    DateTimeOffset Timestamp,
+    string SessionId,
+    string LegId,
+    string? RunId,
+    Dictionary<string, double>? Params,
+    double SessionScore,
+    bool SystemStuck,
+    bool Accepted);

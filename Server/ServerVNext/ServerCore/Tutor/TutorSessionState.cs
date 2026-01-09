@@ -41,6 +41,7 @@ public sealed class LegTutorState
     public int StuckStreak { get; set; }
     public int HintBudget { get; set; }
     public bool HintLocked { get; set; }
+    public Dictionary<string, double>? LastHintParams { get; set; }
     public HintPayload? LastHint { get; set; }
     public bool LastStuck { get; set; }
 }

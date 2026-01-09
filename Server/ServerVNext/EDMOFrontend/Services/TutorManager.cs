@@ -52,6 +52,16 @@ public sealed class TutorManager
         return await response.Content.ReadFromJsonAsync<TutorHintResponse>(JsonOptions, cancellationToken);
     }
 
+    public async Task<TutorStuckReportResponse?> ReportStuckAsync(string sessionId, string legId, CancellationToken cancellationToken = default)
+    {
+        var request = new TutorStuckReportRequest(sessionId, legId);
+        var response = await httpClient.PostAsJsonAsync(Resolve("api/tutor/report-stuck"), request, JsonOptions, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<TutorStuckReportResponse>(JsonOptions, cancellationToken);
+    }
+
     private string Resolve(string relative)
         => new Uri(new Uri(navigationManager.BaseUri), relative).ToString();
 }
