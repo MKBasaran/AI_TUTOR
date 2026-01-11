@@ -8,7 +8,6 @@
         <div class="tutorMeta">
             <span class="tutorLabel">Tutor</span>
             <span class="statusBadge @StatusClass">@StatusText</span>
-            <span class="tierBadge">@TierLabel</span>
         </div>
         <div class="tutorActions">
             <span class="budget">Hints: @HintBudget</span>
@@ -65,14 +64,6 @@
         _ => "ok"
     };
 
-    private string TierLabel => Status?.LastHint?.Tier switch
-    {
-        HintTier.Reflection => "Reflection",
-        HintTier.Micro => "Micro",
-        HintTier.Pattern => "Pattern",
-        _ => "Hint"
-    };
-
     private string HintText
     {
         get
@@ -109,7 +100,7 @@
 
     private int HintBudget => Status?.HintBudgetRemaining ?? 0;
 
-    private bool ShowDirections => Status?.LastHint?.Tier is HintTier.Micro or HintTier.Pattern
+    private bool ShowDirections => Status?.LastHint?.Tier is HintTier.Pattern
         && Status.LastHint.ParameterDirections.Count > 0;
 
     private IEnumerable<(string Label, ParameterDirection Direction)> DirectionItems

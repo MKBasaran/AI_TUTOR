@@ -11,24 +11,24 @@ public sealed class HintGenerator
 
     private static readonly string[] ReflectionHints =
     [
-        "What changed between recent trials? Try a single adjustment and compare stability with speed.",
-        "Pause and review the trend. Are changes helping stability or slowing the run?",
-        "Try one small change at a time and watch the motion carefully.",
-        "If progress slows, simplify the changes and test again."
+        "The trend shows whether a change helped or hurt the motion. Change one thing and compare the next run.",
+        "Multiple changes hide cause and effect. Keep everything else the same and adjust just one setting.",
+        "Stable motion comes from consistent, small experiments. Try a tiny change, then watch the next run closely.",
+        "If progress stalls, changes are often too big or too many. Reset to a simple setting and test a single tweak."
     ];
 
     private static readonly string[] MicroHints =
     [
-        "Make a small change in one direction and see if the motion becomes smoother.",
-        "Try nudging a single parameter while keeping the others steady.",
-        "If the last change reduced stability, try the opposite direction."
+        "Small steps reduce wobble and make cause and effect clearer. Make one small change and keep the rest steady.",
+        "Gentle adjustments often smooth oscillation before adding speed. Nudge one setting slightly and watch the motion.",
+        "Overshooting can make the motion worse on the next run. Try the opposite direction of the last change and compare."
     ];
 
     private static readonly string[] PatternHints =
     [
-        "Reduce aggressiveness until the motion is smooth, then increase gradually while keeping changes consistent.",
-        "Aim for smooth, repeatable motion first, then build up speed in small steps.",
-        "Keep changes consistent across trials and adjust gradually until the motion stabilizes."
+        "Consistent steps reveal which direction truly improves motion. Reduce aggressiveness until smooth, then increase gradually.",
+        "Smooth, repeatable movement creates a reliable baseline. Keep changes consistent and build up slowly.",
+        "Large jumps add noise and hide improvement. Take a few small steps in the same direction and reassess."
     ];
 
     public HintGenerator(TutorOptions options)
@@ -83,7 +83,7 @@ public sealed class HintGenerator
         {
             return new HintPayload(
                 HintTier.Reflection,
-                "Hint limit reached. Focus on one small adjustment and observe the trend.",
+                "The hint limit means you need to rely on the trend now. Make one small adjustment and observe the next run.",
                 new Dictionary<string, ParameterDirection>());
         }
 
@@ -91,7 +91,7 @@ public sealed class HintGenerator
         {
             return new HintPayload(
                 tier,
-                "Safety warning detected. Reduce aggressiveness and keep changes small until the motion stabilizes.",
+                "Safety warnings mean the motion is too aggressive for the hardware. Reduce aggressiveness and keep changes small until it stabilizes.",
                 new Dictionary<string, ParameterDirection>());
         }
 
@@ -102,9 +102,9 @@ public sealed class HintGenerator
             _ => Pick(ReflectionHints)
         };
 
-        var payloadDirections = tier == HintTier.Reflection
-            ? new Dictionary<string, ParameterDirection>()
-            : new Dictionary<string, ParameterDirection>(directions, StringComparer.OrdinalIgnoreCase);
+        var payloadDirections = tier == HintTier.Pattern
+            ? new Dictionary<string, ParameterDirection>(directions, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, ParameterDirection>();
 
         return new HintPayload(tier, text, payloadDirections);
     }
@@ -122,7 +122,7 @@ public sealed class HintGenerator
             };
 
             var label = ParameterLabel(candidate.Key);
-            return $"Try nudging {label} {directionText} and watch for smoother motion.";
+            return $"Small steps make the effect easier to see and reduce instability. Nudge {label} {directionText} and watch the motion.";
         }
 
         return Pick(MicroHints);
