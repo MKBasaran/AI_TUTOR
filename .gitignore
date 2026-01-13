@@ -32,3 +32,4 @@ Server/ServerVNext/EDMOFrontend/bin/Debug/net9.0/Logs
 **/__pycache__/
 **/*.pyc
 artifacts
+.DS_Store
