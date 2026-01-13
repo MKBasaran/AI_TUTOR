@@ -31,3 +31,4 @@ Server/ServerVNext/EDMOFrontend/bin/Debug/net9.0/Logs
 # Python
 **/__pycache__/
 **/*.pyc
+artifacts

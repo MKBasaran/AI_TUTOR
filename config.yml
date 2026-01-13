@@ -1,0 +1,103 @@
+# Tutor RL Configuration
+# Conservative Q-Learning for Hint Generation Policy
+
+data:
+  # Feature columns expected in the dataset
+  feature_columns:
+    - freq_0
+    - amp_0
+    - offset_0
+    - phase_0
+    - freq_1
+    - amp_1
+    - offset_1
+    - phase_1
+    - freq_2
+    - amp_2
+    - offset_2
+    - phase_2
+    - recent_speed
+    - recent_speed_delta
+    - stuck_prob
+    - trial_count
+    - hint_count
+    - time_in_session
+  
+  # Column names for RL-specific data
+  session_id_column: session_id
+  step_idx_column: step_idx
+  action_column: action
+  reward_column: reward
+  done_column: done
+  next_feature_prefix: "next_"
+  
+  # Train/val/test split ratios (by session)
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  
+  # Random seed for reproducibility
+  random_seed: 42
+
+reward:
+  # Reward weights for different components
+  improvement_weight: 1.0
+  stuck_escape_bonus: 2.0
+  hint_penalty: -0.1
+  budget_exceeded_penalty: -5.0
+  unsafe_action_penalty: -10.0
+  
+  # Number of future steps to look ahead for improvement
+  lookahead_k: 3
+  
+  # Thresholds
+  stuck_threshold: 0.7
+  improvement_threshold: 0.05
+
+action:
+  # Total number of discrete actions
+  num_actions: 8
+  
+  # Action ID for "no hint"
+  no_hint_action_id: 0
+  
+  # Actions that should never be taken (safety constraint)
+  disallowed_actions: []
+
+training:
+  # CQL hyperparameters
+  learning_rate: 0.0003
+  batch_size: 256
+  n_epochs: 100
+  gamma: 0.99
+  
+  # CQL-specific: conservative penalty weight
+  # Higher alpha = more conservative (penalize OOD actions more)
+  alpha: 1.0
+  
+  # Neural network architecture
+  hidden_sizes:
+    - 256
+    - 256
+  
+  # Logging and checkpointing
+  eval_frequency: 10
+  save_frequency: 20
+  log_to_tensorboard: false  # Set to true if tensorboardX is installed
+
+safety:
+  # Maximum hints per session
+  hint_budget_max: 10
+  
+  # If stuck_prob < this, prefer NO_HINT
+  stuck_prob_threshold: 0.3
+  
+  # If recent improvement > this, prefer NO_HINT
+  improvement_threshold: 0.0
+  
+  # Model must prefer hint by this Q-value margin to override NO_HINT preference
+  q_value_margin: 0.5
+
+# Output directory for trained models
+artifacts_dir: artifacts
+
