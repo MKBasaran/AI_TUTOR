@@ -1,120 +1,108 @@
-# ServerVNext
+# AI_TUTOR
 
-ServerVNext is a robust, reliable, and modular server designed to run EDMO study sessions.
+AI_TUTOR is a customized EDMO server + UI with tutor hints, stuck-state detection, and A/B hint modes for user studies.
 
-## Running the server
-If you are just looking to run the server, grab the latest release for the hosting platform
+Repository: https://github.com/MKBasaran/AI_TUTOR
 
-| Windows 10+ ([x64](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_win-x64.zip), [arm64](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_win-arm64.zip)) | macOS 12+ ([Intel](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_osx-x64.zip), [Apple Silicon](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_osx-arm64.zip)) | Linux ([x64](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_linux-x64.zip), [arm64](https://github.com/TeamEDMO/ServerVNext/releases/latest/download/EDMOFrontend_linux-arm64.zip)) |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+## What runs what
 
+- `EDMOFrontend` is the web UI + server (Blazor).
+- `ServerCore` contains the robot/session logic and the tutor engine.
+- `../stuck_detector.py` is the Python stuck-state detector used by the tutor.
 
-Once downloaded and extracted, all you have to do is to run the frontend executable.
+## Requirements (development)
 
-* Windows - Simply launch `EDMOFrontend.exe` using the file explorer or through the terminal
-* Linux / MacOS - Launch `EDMOFrontend` via a file manager or terminal
+- .NET 9 SDK
+- Node.js + npm (for frontend assets)
+- Python 3.12 (for the stuck detector)
 
-> The server runs .NET 9 and ASP.NET core. The releases provided by this repo are self-contained, and do not require the user to install the runtimes.
+## Run (development)
 
-Once the server is launched, clients can connect to it freely via the IP addess of the hosting computer. 
+From the repo root:
 
-> By default the IP is `<host computer ip>:5000`
+```powershell
+cd Server/ServerVNext
 
-### Retrieving session data
-Session data is stored in the `{Executable directory}/Logs/` directory. 
+# one-time frontend deps
+cd EDMOFrontend/npm
+npm install
+cd ..\..\
 
-The directory layout of the logs folder is as follows
-
-```
-Logs/ # The general log folder
-	{Server start date/time}/ # Folder for a server run
-		Sessions/
-			{Session Start Date}/
-				{Robot identifier}/
-					{Session Start time}/ # Marks a single session
-						imu.log
-						oscillator{i}.log
-						user{i}.log
-						session.log
-		runtime.log
+# run the server
+ dotnet run --project EDMOFrontend/EDMOFrontend.csproj
 ```
 
-Each session log folder may also contain extra files if plugins are used.
+Open:
+- `http://localhost:8080/` for the normal UI
+- `http://localhost:8080/demo?session_id=demo-session&leg_id=leg-0` for the demo page
 
-> [There is a plugin to mirror session logs to another device on the network when a session ends.](https://github.com/TeamEDMO/FileSyncPlugin)
+## Lab usage
 
+1) Start the server as above on the host laptop.
+2) On tablets/clients, open `http://<host-ip>:8080/`.
+3) Use the controller setup screen to join a robot session.
 
-### Setting up plugins
-The server provides support for arbitrary session plugins. They can be installed into the `Plugins/` directory located in the executable directory.
+> The server currently binds to port 8080 (see `EDMOFrontend/Program.cs`).
 
-> The folder may not be present when downloading a release. One can manually create the plugins folder. The folder is also created when the server starts running.
+## Tutor configuration (A/B hint modes)
 
-Plugins can be provided as a .NET plugin, or a Python script. They can be dropped directly into the plugins folder.
+Tutor settings live in `EDMOFrontend/appsettings.json` and `EDMOFrontend/appsettings.Development.json` under the `Tutor` section.
 
-For more specific information, [refer to the documentation on plugins](./ServerCore/docs/docs/EDMO/Plugins/overview.md).
+Example:
 
-#### .NET plugins
-.NET plugins work out of the box, simply place the plugin DLL along with their dependency libraries into the plugins folder.
-
-#### Python plugins
-Python plugins require Python to be installed on the host system. By default, Python 3.12 is expected to be present on the system.
-
-Python plugins are expected to be self-contained, and not reference other Python files in the plugins directory. They may import Python libraries, but they must be installed into the global python environment.
-
-For more specific information, [refer to the PythonPluginLoader documentation](./ServerCore/docs/docs/EDMO/Plugins/loaders/pythonPluginLoader.md).
-
-## Debugging and Developing
-
-Some prerequisites are required before attempting to debug or develop:
-
-* A desktop platform with the .NET 9 SDK or higher installed.
-* An IDE with support for C#, providing auto completion and syntax highlighting. I recommend using [Visual Studio 2022](https://visualstudio.microsoft.com/), [Visual Studio Code](https://code.visualstudio.com/), or [Jetbrains Rider](https://www.jetbrains.com/rider/)
-* The [node.js package manager](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) is installed
-    + This is used to acquire node packages used by the frontend. And is automatically invoked during the build process.
-
-### Downloading the source code
-
-Clone the repository:
-
-```sh
-git clone https://github.com/TeamEDMO/ServerVNext
-cd ServerVNext
+```json
+"Tutor": {
+  "StuckDetectorPath": "..\\..\\..\\..\\..\\stuck_detector.py",
+  "StuckWindow": 5,
+  "HintBudget": 6,
+  "HistoryLimit": 25,
+  "EscalationTrials": 3,
+  "ProgressThreshold": 0.02,
+  "ParamDeltaEpsilon": 0.05,
+  "IncludeDiagnostics": false,
+  "HintMode": "per_leg",
+  "HintVoteThreshold": 3,
+  "HintVoteTotal": 4
+}
 ```
 
-To update the source code to the latest commit, run the following command inside the osu directory:
+Hint modes:
 
-```sh
-git pull
+- `per_leg` (default): each tablet has its own hint budget.
+- `global_majority`: hints are released only after a vote threshold is met (e.g., 3/4). The button shows `Get hint (x/y)`.
+  - For a biped study, set `HintVoteTotal` to 2 and `HintVoteThreshold` to 2.
+
+## Stuck detector path
+
+The tutor calls `stuck_detector.py`. Use an absolute path if needed.
+
+If Python.NET cannot find Python:
+- Ensure Python 3.12 is on PATH, or
+- Set `PYTHONNET_PYDLL` to your `python312.dll`.
+
+## Logs
+
+Logs are written per server run and per session:
+
+```
+EDMOFrontend/bin/Debug/net9.0/Logs/<run>/
+  runtime.log
+  Sessions/<yyyyMMdd>/<SessionId>/
+    tutor_trials.jsonl
+    tutor_stuck_reports.jsonl
+    session.log
+    imu.log
+    oscillator*.log
+    user*.log
 ```
 
-### Building
+`tutor_trials.jsonl` and `tutor_stuck_reports.jsonl` include a `hint_mode` field so you can identify A/B condition during analysis.
 
-The solution contains 3 projects:
+## Notes
 
-* `ServerCore` - The core library that contains functionality to interface with embedded devices, along with session management functionality.
-* `EDMOFrontend` - The main executable that is used during the EDMO study programmes. Powered by ASP.NET Core and Blazor.
-* `ServerCore.Tests` - Some testing on core functionality provided by `ServerCore`. This also contains some tests aimed at validating implementation compliance of an EDMO robot.
+- If the UI loads without styling, run `npm install` in `EDMOFrontend/npm` and restart.
+- The demo page does not require hardware.
 
-Your IDE should provide launch configuration for every non-library project.
+## License
 
-You can also build each project individually using [`dotnet build`](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-build)
-
-```sh
-dotnet build `ServerCore`
-```
-
-or
-
-```sh
-dotnet build `EDMOFrontend
-```
-
-#### Building plugins
-
-[Refer to the EDMO plugin template repository](https://github.com/TeamEDMO/EDMOServerPluginTemplate)
-
-## Licence
-
-ServerVNext is licensed under the [MIT licence](https://opensource.org/licenses/MIT). Please see the licence file for more information. tl;dr you can do whatever you want as long as you include the original copyright and license notice in any copy of the software/source.
-
-Do take note that project dependencies may not share the same license.
+See `LICENCE` in this repo.
