@@ -11,24 +11,24 @@ public sealed class HintGenerator
 
     private static readonly string[] ReflectionHints =
     [
-        "The trend shows whether a change helped or hurt the motion. Change one thing and compare the next run.",
-        "Multiple changes hide cause and effect. Keep everything else the same and adjust just one setting.",
-        "Stable motion comes from consistent, small experiments. Try a tiny change, then watch the next run closely.",
-        "If progress stalls, changes are often too big or too many. Reset to a simple setting and test a single tweak."
+        "Look at the pattern: did your last change help or hurt? Change one thing, then test again.",
+        "If you change many things at once, it’s hard to know what worked. Keep everything the same and change one setting.",
+        "Good progress comes from small, careful tests. Make a tiny change and watch what happens next.",
+        "If you feel stuck, your changes might be too big. Go back to a simple setup and try one small tweak."
     ];
 
     private static readonly string[] MicroHints =
     [
-        "Small steps reduce wobble and make cause and effect clearer. Make one small change and keep the rest steady.",
-        "Gentle adjustments often smooth oscillation before adding speed. Nudge one setting slightly and watch the motion.",
-        "Overshooting can make the motion worse on the next run. Try the opposite direction of the last change and compare."
+        "Small changes help you see cause and effect. Change one setting a little and keep the rest the same.",
+        "Try a gentle adjustment first. Move one setting slightly, then watch the robot’s movement.",
+        "If the last change made it worse, try the other direction next time and compare."
     ];
 
     private static readonly string[] PatternHints =
     [
-        "Consistent steps reveal which direction truly improves motion. Reduce aggressiveness until smooth, then increase gradually.",
-        "Smooth, repeatable movement creates a reliable baseline. Keep changes consistent and build up slowly.",
-        "Large jumps add noise and hide improvement. Take a few small steps in the same direction and reassess."
+        "Make steady, repeatable tests. Lower the ‘strength’ of changes until it’s smooth, then increase slowly.",
+        "First, aim for smooth and consistent movement. That gives you a good starting point.",
+        "Big jumps can hide what’s really happening. Take a few small steps in one direction, then check results."
     ];
 
     public HintGenerator(TutorOptions options)
@@ -83,7 +83,7 @@ public sealed class HintGenerator
         {
             return new HintPayload(
                 HintTier.Reflection,
-                "The hint limit means you need to rely on the trend now. Make one small adjustment and observe the next run.",
+                "You’ve used all your hints for now. Use the trend: change one small thing and test again.",
                 new Dictionary<string, ParameterDirection>());
         }
 
@@ -91,7 +91,7 @@ public sealed class HintGenerator
         {
             return new HintPayload(
                 tier,
-                "Safety warnings mean the motion is too aggressive for the hardware. Reduce aggressiveness and keep changes small until it stabilizes.",
+                "Safety warning: the robot is moving too strongly. Turn things down and make only small changes until it’s stable.",
                 new Dictionary<string, ParameterDirection>());
         }
 
@@ -122,7 +122,7 @@ public sealed class HintGenerator
             };
 
             var label = ParameterLabel(candidate.Key);
-            return $"Small steps make the effect easier to see and reduce instability. Nudge {label} {directionText} and watch the motion.";
+            return $"Try a small change. Move {label} {directionText}, then watch what changes in the movement.";
         }
 
         return Pick(MicroHints);
