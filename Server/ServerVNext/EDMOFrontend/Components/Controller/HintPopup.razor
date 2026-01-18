@@ -1,0 +1,129 @@
+@using System
+@using System.Linq
+@using ServerCore.Tutor
+
+@* 
+   Global hint popup.
+   Place this component outside the TabView so hints can appear even when the Tutor tab isn't active.
+*@
+
+@if (show && Status?.LastHint is not null)
+{
+    <div class="hintPopupBackdrop" @onclick="Close" role="presentation">
+        <div class="hintPopupCard" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-label="Tutor hint">
+            <div class="hintPopupHeader">
+                <span class="hintPopupTitle">Hint</span>
+                <button type="button" class="hintPopupClose" @onclick="Close" aria-label="Close hint">×</button>
+            </div>
+
+            <div class="hintPopupBody">
+                <p>@Status.LastHint.Text</p>
+
+                @if (ShowDirections)
+                {
+                    <div class="hintPopupDirections">
+                        @foreach (var item in DirectionItems)
+                        {
+                            <span class="directionPill @DirectionClass(item.Direction)">
+                                @item.Label: @DirectionText(item.Direction)
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="hintPopupFooter">
+                <button type="button" class="hintPopupOk" @onclick="Close">OK</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public TutorStatusResponse? Status { get; set; }
+
+    // We need to detect "new hint arrived". HintPayload has no ID, so we use a stable signature.
+    private string? lastSignature;
+    private bool initialized;
+    private bool show;
+
+    protected override void OnParametersSet()
+{
+    var hint = Status?.LastHint;
+    var signature = hint is null ? null : BuildSignature(hint);
+
+    // First time we ever receive parameters:
+    // just remember what's there, don't show a popup.
+    if (!initialized)
+    {
+        initialized = true;
+        lastSignature = signature;
+        return;
+    }
+
+    // After initialization:
+    // show popup only when a NEW hint appears/changes.
+    if (signature is not null && signature != lastSignature)
+    {
+        show = true;
+    }
+
+    lastSignature = signature;
+}
+
+    private void Close() => show = false;
+
+    private static string BuildSignature(HintPayload hint)
+    {
+        var dirs = hint.ParameterDirections is null
+            ? string.Empty
+            : string.Join(",", hint.ParameterDirections
+                .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                .Select(kv => $"{kv.Key}:{kv.Value}"));
+
+        return $"{hint.Tier}|{hint.Text}|{dirs}";
+    }
+
+    private bool ShowDirections => Status?.LastHint?.Tier is HintTier.Pattern
+        && Status.LastHint.ParameterDirections.Count > 0;
+
+    private IEnumerable<(string Label, ParameterDirection Direction)> DirectionItems
+    {
+        get
+        {
+            if (Status?.LastHint is null)
+                yield break;
+
+            var directions = Status.LastHint.ParameterDirections;
+            foreach (var entry in OrderedKeys)
+            {
+                if (directions.TryGetValue(entry.Key, out var direction))
+                    yield return (entry.Label, direction);
+            }
+        }
+    }
+
+    private static readonly (string Key, string Label)[] OrderedKeys =
+    [
+        ("speed", "Speed"),
+        ("range", "Range"),
+        ("baseline_position", "Baseline position"),
+        ("relation", "Relation")
+    ];
+
+    private static string DirectionText(ParameterDirection direction)
+        => direction switch
+        {
+            ParameterDirection.Increase => "Increase",
+            ParameterDirection.Decrease => "Decrease",
+            _ => "Keep"
+        };
+
+    private static string DirectionClass(ParameterDirection direction)
+        => direction switch
+        {
+            ParameterDirection.Increase => "up",
+            ParameterDirection.Decrease => "down",
+            _ => "keep"
+        };
+}

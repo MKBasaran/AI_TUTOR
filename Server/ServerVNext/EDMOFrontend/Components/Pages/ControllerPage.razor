@@ -32,9 +32,14 @@
             </Left>
             <Right>
                 <Card>
+                    <button class="btn btn-secondary" @onclick="TestHint">Test hint popup</button> @* TEST BUTTON REMOVE LATWER *@
+                    <HintPopup Status="tutorStatus" />
                     @if (controlContext is not null)
                     {
+                        
                         <TabView tabIcon="tabIcons" tabContents="tabContent"/>
+                        @* Render the hint popup outside the TabView so hints appear even when the Tutor tab isn't open *@
+                        //<HintPopup Status="tutorStatus" />
                     }
                     else
                     {
@@ -269,5 +274,24 @@
         controlContext?.Dispose();
         objRef?.Dispose();
     }
+
+    private Task TestHint() //REMOVE AFTER TRESTING
+    {
+        var fake = new HintPayload(
+            HintTier.Pattern,
+            "Test hint: try increasing range slightly while keeping baseline stable.",
+            new Dictionary<string, ParameterDirection>
+            {
+                ["range"] = ParameterDirection.Increase,
+                ["baseline_position"] = ParameterDirection.Keep
+            });
+
+            tutorStatus = tutorStatus is null
+            ? new TutorStatusResponse(false, fake, 99, true, "per_user", 0, 3, 4, false)
+            : tutorStatus with { LastHint = fake };
+
+            return InvokeAsync(StateHasChanged);
+    }
+
 
 }

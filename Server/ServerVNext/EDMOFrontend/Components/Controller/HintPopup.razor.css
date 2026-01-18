@@ -1,0 +1,103 @@
+.hintPopupBackdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9999;
+    padding: 1.6rem;
+}
+
+.hintPopupCard {
+    width: min(56rem, 92vw);
+    max-height: 80vh;
+    overflow: auto;
+    border-radius: 1.4rem;
+    background-color: rgba(20, 20, 25, 0.97);
+    color: #ffffff;
+    box-shadow: 0 1.8rem 4rem rgba(0, 0, 0, 0.55);
+    padding: 1.4rem 1.6rem;
+}
+
+.hintPopupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    margin-bottom: 0.9rem;
+}
+
+.hintPopupTitle {
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+}
+
+.hintPopupClose {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 2.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.2rem 0.6rem;
+}
+
+.hintPopupClose:hover {
+    color: #ffffff;
+}
+
+.hintPopupBody p {
+    margin: 0;
+    font-size: 1.7rem;
+    line-height: 1.45;
+}
+
+.hintPopupDirections {
+    margin-top: 1.1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.hintPopupFooter {
+    margin-top: 1.4rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.hintPopupOk {
+    border: none;
+    border-radius: 999px;
+    padding: 0.65rem 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Pills (copied from TutorPanel so they render correctly inside this component) */
+.directionPill {
+    padding: 0.45rem 0.9rem;
+    border-radius: 0.85rem;
+    background-color: rgba(255, 255, 255, 0.6);
+    font-weight: 700;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+.directionPill.up {
+    color: #0b4a24;
+    background-color: rgba(190, 255, 210, 0.8);
+}
+
+.directionPill.down {
+    color: #6a1f1f;
+    background-color: rgba(255, 200, 200, 0.85);
+}
+
+.directionPill.keep {
+    color: #2a3a4a;
+    background-color: rgba(210, 230, 255, 0.8);
+}

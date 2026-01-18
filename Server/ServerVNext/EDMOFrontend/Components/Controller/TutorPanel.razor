@@ -50,6 +50,7 @@
     [Parameter] public EventCallback OnRequestHint { get; set; }
     [Parameter] public EventCallback OnReportStuck { get; set; }
 
+
     private string StatusText => Status switch
     {
         null => "Waiting for trial data",
