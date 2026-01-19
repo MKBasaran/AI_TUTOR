@@ -74,3 +74,19 @@ main {
     position: sticky;
     bottom: 0;
 }
+
+
+
+.tutorStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+
+
+.sliderPanel .resetRow {
+    margin-top: 2rem;
+}
+

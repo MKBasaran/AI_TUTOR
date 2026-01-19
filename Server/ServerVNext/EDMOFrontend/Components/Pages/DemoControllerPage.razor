@@ -78,19 +78,19 @@
         [
             @<Icon Glyph="gamepad" FontSize="3rem">&nbsp;@LegIndex</Icon>,
             @<Icon Glyph="list" FontSize="3rem"/>,
-            @<Icon Glyph="user-group" FontSize="3rem"/>,
-            @<Icon Glyph="lightbulb" FontSize="3rem"/>
+            @<Icon Glyph="user-group" FontSize="3rem"/>
         ];
-
         tabContent =
         [
-            @<DemoSliderPanel Speed="speed" SpeedChanged="OnSpeedChanged"
-                              Range="range" RangeChanged="OnRangeChanged"
-                              BaselinePosition="baseline" BaselinePositionChanged="OnBaselineChanged"
-                              Relation="relation" RelationChanged="OnRelationChanged" />,
+            @<div class="tutorStack">
+                <DemoSliderPanel Speed="speed" SpeedChanged="OnSpeedChanged"
+                                 Range="range" RangeChanged="OnRangeChanged"
+                                 BaselinePosition="baseline" BaselinePositionChanged="OnBaselineChanged"
+                                 Relation="relation" RelationChanged="OnRelationChanged" />
+                <TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck"/>
+            </div>,
             @<TaskPanel ObjectiveGroups="objectiveGroups"/>,
-            @<DemoUserPanel LegIndex="LegIndex"/>,
-            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck" />
+            @<DemoUserPanel LegIndex="LegIndex"/>
         ];
 
         tutorStatus = await TutorManager.GetStatusAsync(SessionId, NormalizedLegId);
@@ -239,3 +239,12 @@
         tutorCts?.Dispose();
     }
 }
+
+
+
+
+
+
+
+
+

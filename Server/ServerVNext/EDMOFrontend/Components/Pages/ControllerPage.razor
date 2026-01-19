@@ -81,7 +81,6 @@
 
 @code{
     private DotNetObjectReference<ControllerPage>? objRef;
-
     private RenderFragment[] tabIcons = [];
     private RenderFragment?[] tabContent = [];
 
@@ -116,22 +115,20 @@
 
         Debug.Assert(controlContext is not null);
         objectiveGroups = [..controlContext.ObjectiveGroups];
-
         tabIcons =
         [
             @<Icon Glyph="gamepad" FontSize="3rem">&nbsp;@controlContext.Index</Icon>,
             @<Icon Glyph="list" FontSize="3rem"/>,
-            @<Icon Glyph="user-group" FontSize="3rem"/>,
-            @<Icon Glyph="lightbulb" FontSize="3rem"/>
+            @<Icon Glyph="user-group" FontSize="3rem"/>
         ];
-
-
         tabContent =
         [
-            @<SliderPanel/>,
+            @<div class="tutorStack">
+                <SliderPanel/>
+                <TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck"/>
+            </div>,
             @<TaskPanel ObjectiveGroups="[..controlContext.ObjectiveGroups]"/>,
-            @<UserPanel/>,
-            @<TutorPanel Status="tutorStatus" OnRequestHint="RequestHint" OnReportStuck="ReportStuck" />
+            @<UserPanel/>
         ];
 
         tutorStatus = await TutorManager.GetStatusAsync(SessionIdentifier, LegId);
@@ -271,3 +268,12 @@
     }
 
 }
+
+
+
+
+
+
+
+
+
