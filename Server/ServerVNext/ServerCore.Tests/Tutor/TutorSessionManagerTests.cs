@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using ServerCore.Tutor;
@@ -16,26 +16,34 @@ public sealed class TutorSessionManagerTests
         {
             EscalationTrials = 2,
             HintBudget = 4,
-            ProgressThreshold = 0
+            ProgressThreshold = 0.1,
+            ParamDeltaEpsilon = 0
         };
 
-        var manager = new TutorSessionManager(stuckDetector, new HintGenerator(options), new NoopTrialLogger(), options);
-        var sessionId = "session-a";
-        var legId = "leg-1";
+        var manager = new TutorSessionManager(
+            stuckDetector,
+            new HintGenerator(options),
+            new NoopTrialLogger(),
+            new NoopStuckReportLogger(),
+            options);
 
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1"));
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-2"));
+        const string sessionId = "session-a";
+        const string legId = "leg-1";
+
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1", baseline: 90));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-2", baseline: 91));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-3", baseline: 92));
 
         var microHint = manager.RequestHint(sessionId, legId);
         Assert.AreEqual(HintTier.Micro, microHint.Hint?.Tier);
 
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-3"));
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-4"));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-4", baseline: 93));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-5", baseline: 94));
 
         var patternHint = manager.RequestHint(sessionId, legId);
         Assert.AreEqual(HintTier.Pattern, patternHint.Hint?.Tier);
 
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-5"));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-6", baseline: 95));
         var status = manager.GetStatus(sessionId, legId);
         Assert.IsFalse(status.Stuck);
     }
@@ -43,19 +51,28 @@ public sealed class TutorSessionManagerTests
     [TestMethod]
     public void HintLockPreventsBackToBackRequests()
     {
-        var stuckDetector = new SequenceStuckDetector(true, true, true);
+        var stuckDetector = new SequenceStuckDetector(true, true);
         var options = new TutorOptions
         {
             EscalationTrials = 2,
             HintBudget = 2,
-            ProgressThreshold = 0
+            ProgressThreshold = 0.1,
+            ParamDeltaEpsilon = 0
         };
 
-        var manager = new TutorSessionManager(stuckDetector, new HintGenerator(options), new NoopTrialLogger(), options);
-        var sessionId = "session-b";
-        var legId = "leg-0";
+        var manager = new TutorSessionManager(
+            stuckDetector,
+            new HintGenerator(options),
+            new NoopTrialLogger(),
+            new NoopStuckReportLogger(),
+            options);
 
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1"));
+        const string sessionId = "session-b";
+        const string legId = "leg-0";
+
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1", baseline: 90));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-2", baseline: 91));
+
         var first = manager.RequestHint(sessionId, legId);
         var second = manager.RequestHint(sessionId, legId);
 
@@ -66,19 +83,28 @@ public sealed class TutorSessionManagerTests
     [TestMethod]
     public void ReflectionHintsHideDirections()
     {
-        var stuckDetector = new SequenceStuckDetector(true, true, true);
+        var stuckDetector = new SequenceStuckDetector(true);
         var options = new TutorOptions
         {
             EscalationTrials = 10,
             HintBudget = 1,
-            ProgressThreshold = 0
+            ProgressThreshold = 0.1,
+            ParamDeltaEpsilon = 0
         };
 
-        var manager = new TutorSessionManager(stuckDetector, new HintGenerator(options), new NoopTrialLogger(), options);
-        var sessionId = "session-c";
-        var legId = "leg-2";
+        var manager = new TutorSessionManager(
+            stuckDetector,
+            new HintGenerator(options),
+            new NoopTrialLogger(),
+            new NoopStuckReportLogger(),
+            options);
 
-        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1"));
+        const string sessionId = "session-c";
+        const string legId = "leg-2";
+
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-1", baseline: 90));
+        manager.SubmitTrial(MakeSubmission(sessionId, legId, "run-2", baseline: 91));
+
         var hint = manager.RequestHint(sessionId, legId);
 
         Assert.AreEqual(HintTier.Reflection, hint.Hint?.Tier);
@@ -88,21 +114,26 @@ public sealed class TutorSessionManagerTests
     [TestMethod]
     public void HintTextContainsNoNumbers()
     {
-        var options = new TutorOptions();
+        var options = new TutorOptions { ParamDeltaEpsilon = 0 };
         var generator = new HintGenerator(options);
+
         var history = new List<TutorTrialRecord>
         {
             new(DateTimeOffset.UtcNow, "run-1", "leg-0",
-                new Dictionary<string, double> { ["speed"] = 1 }, 0, 0.5, new SafetyFlags(), GoalTypes.Speed)
+                new Dictionary<string, double> { ["speed"] = 1, ["range"] = 0, ["baseline_position"] = 90, ["relation"] = 0 },
+                LimbSpeed: 0,
+                SessionScore: 0.5,
+                Safety: new SafetyFlags(),
+                GoalType: GoalTypes.Speed)
         };
 
         var directions = generator.SuggestDirections(history, "leg-0");
-        var hint = generator.CreateHint(HintTier.Micro, directions, new SafetyFlags(), false, GoalTypes.Speed);
+        var hint = generator.CreateHint(HintTier.Micro, directions, new SafetyFlags(), hintLimitReached: false, GoalTypes.Speed);
 
         Assert.IsFalse(Regex.IsMatch(hint.Text, @"\d"));
     }
 
-    private static TrialSubmission MakeSubmission(string sessionId, string legId, string runId)
+    private static TrialSubmission MakeSubmission(string sessionId, string legId, string runId, double baseline)
     {
         return new TrialSubmission(
             sessionId,
@@ -112,19 +143,26 @@ public sealed class TutorSessionManagerTests
             {
                 ["speed"] = 0,
                 ["range"] = 0,
-                ["baseline_position"] = 90,
+                ["baseline_position"] = baseline,
                 ["relation"] = 0
             },
-            null,
-            0,
-            legId,
-            null,
-            GoalTypes.Speed);
+            SpeedMps: null,
+            LimbSpeed: 0,
+            LegId: legId,
+            Safety: null,
+            GoalType: GoalTypes.Speed);
     }
 
     private sealed class NoopTrialLogger : ITrialLogger
     {
         public void Log(TutorTrialLogEntry entry)
+        {
+        }
+    }
+
+    private sealed class NoopStuckReportLogger : IStuckReportLogger
+    {
+        public void Log(TutorStuckReportEntry entry)
         {
         }
     }
@@ -151,3 +189,6 @@ public sealed class TutorSessionManagerTests
         }
     }
 }
+
+
+

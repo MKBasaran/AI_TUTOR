@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using ServerCore.EDMO.Communication;
 using ServerCore.EDMO.Communication.Commands;
 using ServerCore.EDMO.Communication.Packets;
@@ -28,6 +28,7 @@ public class StressTestEDMOPhysical
     }
 
     [TestMethod]
+    [Ignore("Requires physical EDMO hardware; run manually in the lab.")]
     public void StressTestActualEDMO()
     {
         EDMOConnectionManager connectionManager = new();
@@ -89,3 +90,4 @@ public class StressTestEDMOPhysical
         }
     }
 }
+

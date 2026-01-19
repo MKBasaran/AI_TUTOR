@@ -1,23 +1,38 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace ServerCore.Tutor;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum HintTier
 {
+    /// <summary>Guiding questions to prompt reflection.</summary>
     Reflection,
+
+    /// <summary>Small actionable nudge without giving a solution.</summary>
     Micro,
+
+    /// <summary>Strategy-level guidance; may include parameter direction indicators.</summary>
     Pattern
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ParameterDirection
 {
+    /// <summary>Suggest increasing the parameter.</summary>
     Increase,
+
+    /// <summary>Suggest decreasing the parameter.</summary>
     Decrease,
+
+    /// <summary>Suggest keeping the parameter as-is.</summary>
     Keep
 }
 
+/// <summary>
+/// Safety flags reported by the robot/session.
+/// </summary>
 public record SafetyFlags(
     [property: JsonPropertyName("overcurrent")] bool Overcurrent = false,
     [property: JsonPropertyName("overtemp")] bool Overtemp = false,
@@ -27,6 +42,9 @@ public record SafetyFlags(
     public bool AnyIssue => Overcurrent || Overtemp || Timeout;
 }
 
+/// <summary>
+/// Trial event submitted by the frontend or an external telemetry source.
+/// </summary>
 public record TrialSubmission(
     [property: JsonPropertyName("session_id")] string SessionId,
     [property: JsonPropertyName("run_id")] string RunId,
@@ -38,16 +56,25 @@ public record TrialSubmission(
     [property: JsonPropertyName("safety")] SafetyFlags? Safety = null,
     [property: JsonPropertyName("goal_type")] string? GoalType = null);
 
+/// <summary>
+/// A hint returned by the tutor system.
+/// </summary>
 public record HintPayload(
     [property: JsonPropertyName("tier")] HintTier Tier,
     [property: JsonPropertyName("text")] string Text,
     [property: JsonPropertyName("parameter_directions")] Dictionary<string, ParameterDirection> ParameterDirections);
 
+/// <summary>
+/// Optional diagnostics returned to assist debugging and testing.
+/// </summary>
 public record TutorDiagnostics(
     [property: JsonPropertyName("history_count")] int HistoryCount,
     [property: JsonPropertyName("stuck_streak")] int StuckStreak,
     [property: JsonPropertyName("current_tier")] HintTier CurrentTier);
 
+/// <summary>
+/// Response for a trial submission.
+/// </summary>
 public record TutorTrialResponse(
     [property: JsonPropertyName("stuck")] bool Stuck,
     [property: JsonPropertyName("hint")] HintPayload? Hint,
@@ -60,6 +87,9 @@ public record TutorTrialResponse(
     [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
     [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
+/// <summary>
+/// Lightweight tutor status for polling.
+/// </summary>
 public record TutorStatusResponse(
     [property: JsonPropertyName("stuck")] bool Stuck,
     [property: JsonPropertyName("last_hint")] HintPayload? LastHint,
@@ -71,6 +101,9 @@ public record TutorStatusResponse(
     [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
     [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
+/// <summary>
+/// Response for an explicit hint request.
+/// </summary>
 public record TutorHintResponse(
     [property: JsonPropertyName("stuck")] bool Stuck,
     [property: JsonPropertyName("hint")] HintPayload? Hint,
@@ -82,15 +115,24 @@ public record TutorHintResponse(
     [property: JsonPropertyName("hint_vote_total")] int HintVoteTotal,
     [property: JsonPropertyName("hint_voted")] bool HintVoted);
 
+/// <summary>
+/// Request payload for hint voting / hint request.
+/// </summary>
 public record TutorHintRequest(
     [property: JsonPropertyName("session_id")] string SessionId,
     [property: JsonPropertyName("leg_id")] string LegId);
 
+/// <summary>
+/// Student-reported stuck signal.
+/// </summary>
 public record TutorStuckReportRequest(
     [property: JsonPropertyName("session_id")] string SessionId,
     [property: JsonPropertyName("leg_id")] string LegId,
     [property: JsonPropertyName("timestamp")] DateTimeOffset? Timestamp = null);
 
+/// <summary>
+/// Response payload for a stuck report submission.
+/// </summary>
 public record TutorStuckReportResponse(
     [property: JsonPropertyName("accepted")] bool Accepted,
     [property: JsonPropertyName("system_stuck")] bool SystemStuck);
