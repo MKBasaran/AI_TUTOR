@@ -28,7 +28,6 @@ public class StressTestEDMOPhysical
     }
 
     [TestMethod]
-    [Ignore("Requires physical EDMO hardware; run manually in the lab.")]
     public void StressTestActualEDMO()
     {
         EDMOConnectionManager connectionManager = new();
